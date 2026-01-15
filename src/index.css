@@ -1,0 +1,110 @@
+:root {
+  /* Warm Blue Palette */
+  --primary-blue: #1565C0;
+  /* Strong Blue for headers/primary actions */
+  --secondary-blue: #42A5F5;
+  /* Soft Blue for secondary actions */
+  --bg-color: #E3F2FD;
+  /* Very light blue for background (Warm feel) */
+  --surface-white: #FFFFFF;
+  /* Cards */
+  --text-dark: #0D47A1;
+  /* Dark Blue/Black for text */
+  --text-light: #546E7A;
+  /* Grey-ish blue for secondary text */
+  --accent-green: #4CAF50;
+  /* Success/Healthy */
+  --accent-orange: #FF9800;
+  /* Warning/Needs Water */
+  --accent-red: #F44336;
+  /* Danger/Disease */
+
+  /* Spacing & Layout */
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+
+  /* Typography */
+  --font-family: 'Inter', system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  background-color: var(--bg-color);
+  color: var(--text-dark);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Utilities */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s;
+  gap: 8px;
+  font-size: 1rem;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background-color: var(--primary-blue);
+  color: white;
+  box-shadow: 0 4px 6px rgba(21, 101, 192, 0.3);
+}
+
+.btn-secondary {
+  background-color: var(--surface-white);
+  color: var(--primary-blue);
+  border: 2px solid var(--primary-blue);
+}
+
+.card {
+  background: var(--surface-white);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: var(--spacing-md);
+}
+
+.container {
+  max-width: 480px;
+  /* Mobile focused */
+  margin: 0 auto;
+  padding: var(--spacing-md);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out;
+}

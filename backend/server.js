@@ -17,13 +17,27 @@ app.use(morgan('dev')); // Logger
 
 // Database Connections
 (async () => {
+  try {
+    // ✅ PostgreSQL connect
     await connectSQL();
-    await connectMongo();
+    console.log('✅ PostgreSQL connected');
+
+    // ❌ MongoDB production la skip
+    if (process.env.NODE_ENV !== 'production') {
+      await connectMongo();
+      console.log('✅ MongoDB connected');
+    } else {
+      console.log('⚠️ MongoDB skipped (production)');
+    }
+  } catch (err) {
+    console.error('❌ Database connection failed:', err);
+    process.exit(1);
+  }
 })();
 
 // Routes
 app.get('/', (req, res) => {
-    res.send('🌾 AgriFarm API is Running...');
+  res.send('🌾 AgriFarm API is Running...');
 });
 
 // Import Routes
@@ -35,11 +49,11 @@ app.use('/api/farms', farmRoutes);
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ success: false, message: 'Server Error' });
+  console.error(err.stack);
+  res.status(500).json({ success: false, message: 'Server Error' });
 });
 
 // Start Server
 app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });

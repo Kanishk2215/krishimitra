@@ -1,8 +1,9 @@
 const CONFIG = {
-    // ⚠️ REPLACE THIS WITH YOUR RAILWAY/RENDER BACKEND URL AFTER DEPLOYING ⚠️
-    PRODUCTION_API_URL: "https://krishimitra-n0ni.onrender.com",
+    // 🌍 YOUR PUBLIC HOST ID (Subdomain for LocalTunnel/Ngrok)
+    HOST_ID: "krishimitra-live-hq",
 
-    // ⚠️ REPLACE THIS WITH YOUR RENDER ML URL AFTER DEPLOYING ⚠️
+    // ⚠️ Production URLs (Render/Vercel)
+    PRODUCTION_API_URL: "https://krishimitra-1-cnf1.onrender.com",
     PRODUCTION_ML_URL: "https://krishimitra-ml.onrender.com",
 
     // Default Local URLs
@@ -12,27 +13,34 @@ const CONFIG = {
 
 function getApiUrl() {
     const host = window.location.hostname;
-    // If running on Vercel or public domain, use Production URL
-    if (host.includes('vercel.app') || host.includes('netlify.app') || host.includes('render.com')) {
+
+    // 1. Check if running on Official Production (Render/Vercel)
+    if (host.includes('onrender.com') || host.includes('vercel.app')) {
         return CONFIG.PRODUCTION_API_URL;
     }
-    // If using LocalTunnel
-    if (host.includes('loca.lt') || host.includes('ngrok')) {
-        return 'https://krishimitra-api.loca.lt'; // Or update this if needed
+
+    // 2. Check if using the Public Host ID (LocalTunnel)
+    if (host.includes(CONFIG.HOST_ID)) {
+        return `https://${CONFIG.HOST_ID}-api.loca.lt`;
     }
-    // Default to Local
+
+    // 3. Fallback to Local IP or Localhost
     const localIP = host === 'localhost' ? '127.0.0.1' : host;
     return `http://${localIP}:5000`;
 }
 
 function getMlUrl() {
     const host = window.location.hostname;
-    if (host.includes('vercel.app') || host.includes('netlify.app') || host.includes('render.com')) {
+
+    if (host.includes('onrender.com') || host.includes('vercel.app')) {
         return CONFIG.PRODUCTION_ML_URL;
     }
-    if (host.includes('loca.lt') || host.includes('ngrok')) {
-        return 'https://krishimitra-ml.loca.lt';
+
+    if (host.includes(CONFIG.HOST_ID)) {
+        return `https://${CONFIG.HOST_ID}-ml.loca.lt`;
     }
+
     const localIP = host === 'localhost' ? '127.0.0.1' : host;
     return `http://${localIP}:5001`;
 }
+

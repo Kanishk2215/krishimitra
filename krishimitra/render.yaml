@@ -4,7 +4,7 @@ services:
     name: krishimitra-backend
     env: node
     plan: free
-    repo: https://github.com/TODO_REPLACE_WITH_YOUR_REPO # This will be auto-detected if connected via UI
+    repo: https://github.com/Kanishk2215/krishimitra # This will be auto-detected if connected via UI
     buildCommand: cd backend && npm install
     startCommand: cd backend && npm start
     envVars:
@@ -22,7 +22,7 @@ services:
     name: krishimitra-ml
     env: python
     plan: free
-    repo: https://github.com/TODO_REPLACE_WITH_YOUR_REPO
+    repo: https://github.com/Kanishk2215/krishimitra
     buildCommand: cd ml-service && pip install -r requirements.txt
     startCommand: cd ml-service && gunicorn app:app
     envVars:

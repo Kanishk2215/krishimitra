@@ -2,11 +2,9 @@ import React from 'react';
 import CameraCapture from '../components/CameraCapture';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { useLanguage } from '../context/LanguageContext';
 
 const Camera = () => {
     const navigate = useNavigate();
-    const { t } = useLanguage();
 
     return (
         <div style={{ height: '100vh', background: '#000' }}>
@@ -21,7 +19,7 @@ const Camera = () => {
             }}>
                 <button
                     onClick={() => navigate(-1)}
-                    style={{ background: 'none', border: 'none', color: 'white', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem' }}
+                    style={{ background: 'none', border: 'none', color: 'white', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem', cursor: 'pointer' }}
                 >
                     <ArrowLeft /> Back
                 </button>

@@ -1,3 +1,5 @@
+import { secureSave, secureGet } from './secureStorage';
+
 // Simulate AI Analysis locally
 export const analyzeCrop = async (imageData) => {
     return new Promise((resolve) => {
@@ -53,7 +55,6 @@ export const analyzeCrop = async (imageData) => {
 
             resolve({
                 ...result,
-                id: Date.now(),
                 timestamp: new Date().toISOString()
             });
         }, 2000);
@@ -61,11 +62,16 @@ export const analyzeCrop = async (imageData) => {
 };
 
 export const saveResult = (result) => {
-    const history = JSON.parse(localStorage.getItem('crop_history') || '[]');
-    history.unshift(result);
-    localStorage.setItem('crop_history', JSON.stringify(history));
+    const history = getHistory();
+    const newEntry = {
+        id: Date.now(),
+        date: new Date().toLocaleDateString(),
+        ...result
+    };
+    const updatedHistory = [newEntry, ...history];
+    secureSave('scan_history', updatedHistory);
 };
 
 export const getHistory = () => {
-    return JSON.parse(localStorage.getItem('crop_history') || '[]');
+    return secureGet('scan_history') || [];
 };

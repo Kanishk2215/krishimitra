@@ -8,32 +8,34 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      devOptions: {
-        enabled: true
-      },
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'Smart Crop Advisory System',
-        short_name: 'SmartCrop',
-        description: 'AI-powered crop health monitoring for farmers',
-        theme_color: '#1565C0',
-        background_color: '#E3F2FD',
-        display: 'standalone',
-        orientation: 'portrait',
+        name: 'Smart Crop Advisory',
+        short_name: 'AgriFarm',
+        description: 'AI-Powered Smart Crop Advisory System',
+        theme_color: '#ffffff',
         icons: [
           {
             src: 'pwa-192x192.png',
             sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any maskable'
+            type: 'image/png'
           },
           {
             src: 'pwa-512x512.png',
             sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable'
+            type: 'image/png'
           }
         ]
       }
     })
   ],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
+  }
 })

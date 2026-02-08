@@ -22,7 +22,22 @@ export const languages = {
         no_history: 'No past scans found.',
         ai_solution: 'AI Solution',
         prevention: 'Prevention',
-        cause: 'Cause'
+        cause: 'Cause',
+        password_placeholder: 'Enter Password',
+        mobile_placeholder: 'Enter Mobile Number',
+        firstname_placeholder: 'First Name',
+        lastname_placeholder: 'Last Name',
+        new_password_placeholder: 'New Password',
+        re_password_placeholder: 'Re-enter Password',
+        register_btn: 'Register',
+        register_link: 'New User? Register Here',
+        login_link: 'Already have an account? Login',
+        password_mismatch: 'Passwords do not match',
+        user_exists: 'User already exists',
+        login_success: 'Login Successful',
+        fill_all: 'Please fill all fields',
+        listen: 'Listen',
+        detecting: 'Analyzing...'
     },
     hi: {
         name: 'हिंदी',
@@ -43,7 +58,22 @@ export const languages = {
         no_history: 'कोई पुराना स्कैन नहीं मिला।',
         ai_solution: 'AI उपाय',
         prevention: 'रोकथाम',
-        cause: 'कारण'
+        cause: 'कारण',
+        password_placeholder: 'पासवर्ड डालें',
+        mobile_placeholder: 'मोबाइल नंबर डालें',
+        firstname_placeholder: 'पहला नाम',
+        lastname_placeholder: 'उपनाम',
+        new_password_placeholder: 'नया पासवर्ड',
+        re_password_placeholder: 'पासवर्ड पुनः डालें',
+        register_btn: 'रजिस्टर करें',
+        register_link: 'नया उपयोगकर्ता? यहाँ रजिस्टर करें',
+        login_link: 'क्या आपके पास खाता है? लॉग इन करें',
+        password_mismatch: 'पासवर्ड मेल नहीं खाते',
+        user_exists: 'उपयोगकर्ता पहले से मौजूद है',
+        login_success: 'लॉगिन सफल',
+        fill_all: 'कृपया सभी जानकारी भरें',
+        listen: ' सुनें',
+        detecting: 'जांच की जा रही है...'
     },
     ta: {
         name: 'தமிழ்',
@@ -64,7 +94,22 @@ export const languages = {
         no_history: 'கடந்தகால ஸ்கேன் எதுவும் இல்லை.',
         ai_solution: 'AI தீர்வு',
         prevention: 'தடுப்பு',
-        cause: 'காரணம்'
+        cause: 'காரணம்',
+        password_placeholder: 'கடவுச்சொல்லை உள்ளிடவும்',
+        mobile_placeholder: 'மொபைல் எண்ணை உள்ளிடவும்',
+        firstname_placeholder: 'முதல் பெயர்',
+        lastname_placeholder: 'கடைசி பெயர்',
+        new_password_placeholder: 'புதிய கடவுச்சொல்',
+        re_password_placeholder: 'கடவுச்சொல்லை மீண்டும் உள்ளிடவும்',
+        register_btn: 'பதிவு செய்',
+        register_link: 'புதிய பயனர்? இங்கே பதிவு செய்யுங்கள்',
+        login_link: 'ஏற்கனவே கணக்கு உள்ளதா? உள்நுழைய',
+        password_mismatch: 'கடவுச்சொற்கள் பொருந்தவில்லை',
+        user_exists: 'பயனர் ஏற்கனவே உள்ளார்',
+        login_success: 'வெற்றிகரமாக உள்நுழைந்தது',
+        fill_all: 'அனைத்து விவரங்களையும் நிரப்பவும்',
+        listen: 'கேளுங்கள்',
+        detecting: 'ஆய்வு செய்கிறது...'
     }
 };
 

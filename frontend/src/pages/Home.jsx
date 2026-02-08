@@ -75,7 +75,7 @@ const Home = () => {
                     onClick={() => navigate('/knowledge')}
                 >
                     <div style={{
-                        background: 'var(--accent-green)',
+                        background: '#9C27B0',
                         padding: '12px',
                         borderRadius: '50%',
                         marginBottom: '12px'
@@ -101,7 +101,6 @@ const Home = () => {
                     <span style={{ fontWeight: '600', color: 'var(--text-light)' }}>{t('history_title')}</span>
                 </button>
             </div>
-
         </div>
     );
 };

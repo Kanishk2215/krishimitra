@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Camera as CameraIcon, CheckCircle, RotateCcw, AlertCircle } from 'lucide-react';
+import { Camera as CameraIcon, CheckCircle, RotateCcw, AlertCircle, Image as ImageIcon } from 'lucide-react';
 import AdvisoryCard from './AdvisoryCard';
 import { analyzeCrop, saveResult } from '../utils/aiEngine';
 
@@ -70,6 +70,19 @@ const CameraCapture = ({ onAnalyze }) => {
         startCamera();
     };
 
+    const handleFileUpload = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImage(reader.result);
+                stopCamera();
+                simulateAnalysis();
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     return (
         <div style={{ padding: '0 16px' }}>
             {!image ? (
@@ -86,26 +99,60 @@ const CameraCapture = ({ onAnalyze }) => {
                         playsInline
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
-                    <button
-                        onClick={captureDisplay}
-                        style={{
-                            position: 'absolute',
-                            bottom: '32px',
-                            left: '50%',
-                            transform: 'translateX(-50%)',
-                            width: '72px',
-                            height: '72px',
-                            borderRadius: '50%',
-                            backgroundColor: 'white',
-                            border: '4px solid rgba(255,255,255,0.5)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        <div style={{ width: '60px', height: '60px', borderRadius: '50%', border: '2px solid black' }} />
-                    </button>
+
+                    {/* Controls Overlay */}
+                    <div style={{
+                        position: 'absolute',
+                        bottom: '32px',
+                        left: '0',
+                        right: '0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '24px'
+                    }}>
+                        {/* Capture Button */}
+                        <button
+                            onClick={captureDisplay}
+                            style={{
+                                width: '72px',
+                                height: '72px',
+                                borderRadius: '50%',
+                                backgroundColor: 'white',
+                                border: '4px solid rgba(255,255,255,0.5)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <div style={{ width: '60px', height: '60px', borderRadius: '50%', border: '2px solid black' }} />
+                        </button>
+
+                        {/* Upload Button */}
+                        <label
+                            htmlFor="file-upload"
+                            style={{
+                                width: '50px',
+                                height: '50px',
+                                borderRadius: '50%',
+                                backgroundColor: 'rgba(255,255,255,0.8)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <ImageIcon size={24} color="black" />
+                        </label>
+                        <input
+                            id="file-upload"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileUpload}
+                            style={{ display: 'none' }}
+                        />
+                    </div>
                 </div>
             ) : (
                 <div className="animate-fade-in">

@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # PostgreSQL - Structured Data (Users, Farms, Market Prices)
+  postgres:
+    image: postgres:15-alpine
+    container_name: agri_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-agrifarm}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # MongoDB - Unstructured Data (Images, Logs, Community Posts)
+  mongo:
+    image: mongo:6.0
+    container_name: agri_mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-password}
+    volumes:
+      - mongodata:/data/db
+
+  # Redis - Caching (Weather API responses, Sessions)
+  redis:
+    image: redis:7-alpine
+    container_name: agri_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+
+  # Backend - Node.js Express API
+  backend:
+    build: ./backend
+    container_name: agri_backend
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - DB_HOST=postgres
+      - DB_USER=${POSTGRES_USER:-postgres}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - DB_NAME=${POSTGRES_DB:-agrifarm}
+      - MONGO_URI=mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:-password}@mongo:27017/agrifarm?authSource=admin
+      - REDIS_HOST=redis
+    depends_on:
+      - postgres
+      - mongo
+      - redis
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  # ML Service - Python Flask (Crop Rec, Disease Detection)
+  ml-service:
+    build: ./ml-service
+    container_name: agri_ml_service
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./ml-service:/app
+    environment:
+      - FLASK_ENV=development
+
+volumes:
+  pgdata:
+  mongodata:
+  redisdata:

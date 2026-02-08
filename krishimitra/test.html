@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Krishimitra - Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+
+        .test-section {
+            background: #f0f0f0;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+
+        button {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #16a34a;
+        }
+
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+
+        .error {
+            color: red;
+        }
+
+        .success {
+            color: green;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🌾 Krishimitra - System Test</h1>
+
+    <div class="test-section">
+        <h3>1. Backend Connection Test</h3>
+        <button onclick="testBackend()">Test Backend</button>
+        <div id="backend-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. Registration Test</h3>
+        <input type="text" id="firstName" placeholder="First Name" value="Ramesh"><br><br>
+        <input type="text" id="lastName" placeholder="Last Name" value="Kumar"><br><br>
+        <input type="tel" id="regPhone" placeholder="Mobile (10 digits)" value="9876543210"><br><br>
+        <input type="password" id="regPassword" placeholder="Password" value="test123"><br><br>
+        <button onclick="testRegister()">Register</button>
+        <div id="register-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. Login Test</h3>
+        <input type="tel" id="loginPhone" placeholder="Mobile" value="9876543210"><br><br>
+        <input type="password" id="loginPassword" placeholder="Password" value="test123"><br><br>
+        <button onclick="testLogin()">Login</button>
+        <div id="login-result" class="result"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+
+        async function testBackend() {
+            const result = document.getElementById('backend-result');
+            try {
+                const res = await fetch('http://localhost:5000');
+                const text = await res.text();
+                result.innerHTML = `<span class="success">✅ Backend is running: ${text}</span>`;
+            } catch (err) {
+                result.innerHTML = `<span class="error">❌ Backend Error: ${err.message}</span>`;
+            }
+        }
+
+        async function testRegister() {
+            const result = document.getElementById('register-result');
+            const data = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                phone: document.getElementById('regPhone').value,
+                password: document.getElementById('regPassword').value
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const json = await res.json();
+
+                if (res.ok) {
+                    result.innerHTML = `<span class="success">✅ Registration Success!<br>Token: ${json.token.substring(0, 20)}...</span>`;
+                } else {
+                    result.innerHTML = `<span class="error">❌ ${json.error}</span>`;
+                }
+            } catch (err) {
+                result.innerHTML = `<span class="error">❌ Error: ${err.message}</span>`;
+            }
+        }
+
+        async function testLogin() {
+            const result = document.getElementById('login-result');
+            const data = {
+                phone: document.getElementById('loginPhone').value,
+                password: document.getElementById('loginPassword').value
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const json = await res.json();
+
+                if (res.ok) {
+                    result.innerHTML = `<span class="success">✅ Login Success!<br>Welcome: ${json.farmer.firstName} ${json.farmer.lastName}</span>`;
+                } else {
+                    result.innerHTML = `<span class="error">❌ ${json.error}</span>`;
+                }
+            } catch (err) {
+                result.innerHTML = `<span class="error">❌ Error: ${err.message}</span>`;
+            }
+        }
+    </script>
+</body>
+
+</html>

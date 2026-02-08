@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Krishimitra - Smart Farmer Advisory</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        .bg-pattern {
+            background-color: #f0fdf4;
+            background-image: radial-gradient(#16a34a 0.5px, transparent 0.5px);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+
+<body class="bg-pattern min-h-screen flex items-center justify-center p-4">
+    <div class="glass w-full max-w-md p-8 rounded-3xl shadow-2xl border border-green-100">
+        <div class="text-center mb-8">
+            <div class="inline-block p-4 bg-green-100 rounded-2xl mb-4">
+                <span class="text-4xl">🌾</span>
+            </div>
+            <h1 class="text-3xl font-bold text-green-800">Krishimitra</h1>
+            <p class="text-green-600 font-medium">Empowering Indian Farmers</p>
+            <div id="status"
+                class="mt-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center justify-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-slate-300" id="statusDot"></span>
+                <span id="statusText">Checking System...</span>
+            </div>
+        </div>
+
+        <!-- Tab Switcher -->
+        <div class="flex p-1 bg-green-50 rounded-xl mb-8">
+            <button id="loginTab"
+                class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 bg-white text-green-700 shadow-sm">Login</button>
+            <button id="signupTab"
+                class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 text-green-600 hover:bg-white/50">Register</button>
+        </div>
+
+        <!-- Alert -->
+        <div id="alert" class="hidden mb-6 p-4 rounded-xl text-sm font-medium animate-pulse"></div>
+
+        <!-- Login Form -->
+        <form id="loginForm" class="space-y-5">
+            <div>
+                <label class="block text-sm font-semibold text-green-900 mb-1.5 ml-1">Mobile Number</label>
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-green-600 font-bold">+91</span>
+                    <input type="tel" name="phone" required maxlength="10" placeholder="9876543210"
+                        class="w-full pl-14 pr-4 py-3 bg-white border border-green-100 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-green-900 mb-1.5 ml-1">Password</label>
+                <input type="password" name="password" required placeholder="••••••••"
+                    class="w-full px-4 py-3 bg-white border border-green-100 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all">
+            </div>
+            <button type="submit"
+                class="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg shadow-green-200 transition-all transform hover:scale-[1.02] active:scale-[0.98]">
+                Start Farming
+            </button>
+        </form>
+
+        <!-- Register Form -->
+        <form id="registerForm" class="hidden space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-green-900 mb-1.5 ml-1">First Name</label>
+                    <input type="text" name="firstName" required placeholder="Ram"
+                        class="w-full px-4 py-3 bg-white border border-green-100 rounded-xl focus:ring-2 focus:ring-green-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-green-900 mb-1.5 ml-1">Last Name</label>
+                    <input type="text" name="lastName" required placeholder="Singh"
+                        class="w-full px-4 py-3 bg-white border border-green-100 rounded-xl focus:ring-2 focus:ring-green-500 outline-none">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-green-900 mb-1.5 ml-1">Mobile Number</label>
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-green-600 font-bold">+91</span>
+                    <input type="tel" name="phone" required maxlength="10" placeholder="9876543210"
+                        class="w-full pl-14 pr-4 py-3 bg-white border border-green-100 rounded-xl focus:ring-2 focus:ring-green-500 outline-none">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-green-900 mb-1.5 ml-1">New Password</label>
+                <input type="password" name="password" required minlength="6" placeholder="Min. 6 characters"
+                    class="w-full px-4 py-3 bg-white border border-green-100 rounded-xl focus:ring-2 focus:ring-green-500 outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-green-900 mb-1.5 ml-1">Confirm Password</label>
+                <input type="password" id="confirmPassword" required placeholder="Re-type password"
+                    class="w-full px-4 py-3 bg-white border border-green-100 rounded-xl focus:ring-2 focus:ring-green-500 outline-none">
+            </div>
+            <button type="submit"
+                class="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg shadow-green-200 transition-all transform hover:scale-[1.02]">
+                Create My Account
+            </button>
+        </form>
+
+        <p class="mt-8 text-center text-xs text-green-500 font-medium">
+            🔒 Industry Standard Data Security & Privacy
+        </p>
+    </div>
+
+    <script src="config.js"></script>
+    <script>
+        const API_BASE = `${getApiUrl()}/api`;
+        const STATUS_URL = `${getApiUrl()}/`;
+
+        console.log("🌎 API_BASE:", API_BASE);
+        console.log("🌦️ STATUS_URL:", STATUS_URL);
+
+        // System Status Check (Continuous Monitor)
+        async function checkStatus() {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            const forms = [document.getElementById('loginForm'), document.getElementById('registerForm')];
+
+            try {
+                const res = await fetch(STATUS_URL, { mode: 'cors' });
+                if (res.ok) {
+                    dot.className = "w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.8)] animate-pulse";
+                    text.textContent = "System Secured & Online";
+                    text.className = "text-green-600 font-bold";
+                    forms.forEach(f => f.style.opacity = "1");
+                } else { throw new Error(); }
+            } catch (err) {
+                dot.className = "w-2.5 h-2.5 rounded-full bg-red-600 shadow-[0_0_12px_rgba(220,38,38,0.8)]";
+                text.textContent = "System Offline (Please Wait)";
+                text.className = "text-red-600 font-bold";
+                // Optionally dim forms if offline
+                // forms.forEach(f => f.style.opacity = "0.6");
+            }
+        }
+        setInterval(checkStatus, 2000);
+        checkStatus();
+
+        // Tab switching
+        const loginTab = document.getElementById('loginTab');
+        const signupTab = document.getElementById('signupTab');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+
+        loginTab.onclick = () => {
+            loginTab.className = "flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 bg-white text-green-700 shadow-sm";
+            signupTab.className = "flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 text-green-600 hover:bg-white/50";
+            loginForm.classList.remove('hidden');
+            registerForm.classList.add('hidden');
+        };
+
+        signupTab.onclick = () => {
+            signupTab.className = "flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 bg-white text-green-700 shadow-sm";
+            loginTab.className = "flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 text-green-600 hover:bg-white/50";
+            registerForm.classList.remove('hidden');
+            loginForm.classList.add('hidden');
+        };
+
+        function notify(msg, type = 'error') {
+            const el = document.getElementById('alert');
+            el.textContent = msg;
+            el.className = `mb-6 p-4 rounded-xl text-sm font-medium ${type === 'error' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`;
+            el.classList.remove('hidden');
+        }
+
+        // Registration
+        registerForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(registerForm));
+            const confirm = document.getElementById('confirmPassword').value;
+
+            if (data.password !== confirm) return notify('Passwords do not match');
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    notify('Account created successfully! Please login to continue.', 'success');
+                    setTimeout(() => {
+                        loginTab.click();
+                        registerForm.reset();
+                    }, 2000);
+                } else {
+                    notify(result.error);
+                }
+            } catch (err) { notify('Server connection failed. Is backend running?'); }
+        };
+
+        // Login
+        loginForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(loginForm));
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    localStorage.setItem('token', result.token);
+                    localStorage.setItem('farmer', JSON.stringify(result.farmer));
+                    window.location.href = 'dashboard.html';
+                } else {
+                    notify(result.error);
+                }
+            } catch (err) { notify('Server connection failed.'); }
+        };
+    </script>
+</body>
+
+</html>

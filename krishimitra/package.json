@@ -1,0 +1,13 @@
+{
+    "name": "krishimitra-root",
+    "version": "1.0.0",
+    "scripts": {
+        "start": "concurrently \"npm run backend\" \"npm run ml\" \"npm run frontend\"",
+        "backend": "cd backend && npm run dev",
+        "ml": "cd ml-service && python app.py",
+        "frontend": "cd frontend && npm run dev"
+    },
+    "dependencies": {
+        "concurrently": "^8.2.2"
+    }
+}

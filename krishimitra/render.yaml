@@ -1,0 +1,38 @@
+services:
+  # 1. Backend API (Node.js)
+  - type: web
+    name: krishimitra-backend
+    env: node
+    plan: free
+    repo: https://github.com/TODO_REPLACE_WITH_YOUR_REPO # This will be auto-detected if connected via UI
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: krishimitra-db
+          property: connectionString
+      - key: NODE_ENV
+        value: production
+
+  # 2. ML Service (Python)
+  - type: web
+    name: krishimitra-ml
+    env: python
+    plan: free
+    repo: https://github.com/TODO_REPLACE_WITH_YOUR_REPO
+    buildCommand: cd ml-service && pip install -r requirements.txt
+    startCommand: cd ml-service && gunicorn app:app
+    envVars:
+      - key: PORT
+        value: 5001
+      - key: PYTHON_VERSION
+        value: 3.10.0
+
+databases:
+  - name: krishimitra-db
+    databaseName: krishimitra
+    user: k_admin
+    plan: free # Render Free tier (90 days usually, assumes active)

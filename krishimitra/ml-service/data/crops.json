@@ -1,0 +1,37 @@
+[
+    {
+        "name": "Soybean",
+        "soil_type": "Black",
+        "season": "Kharif",
+        "rainfall_min": 600,
+        "rainfall_max": 1000
+    },
+    {
+        "name": "Cotton",
+        "soil_type": "Black",
+        "season": "Kharif",
+        "rainfall_min": 500,
+        "rainfall_max": 800
+    },
+    {
+        "name": "Wheat",
+        "soil_type": "Alluvial",
+        "season": "Rabi",
+        "rainfall_min": 400,
+        "rainfall_max": 600
+    },
+    {
+        "name": "Rice",
+        "soil_type": "Clay",
+        "season": "Kharif",
+        "rainfall_min": 1000,
+        "rainfall_max": 2000
+    },
+    {
+        "name": "Tur",
+        "soil_type": "Red",
+        "season": "Kharif",
+        "rainfall_min": 600,
+        "rainfall_max": 800
+    }
+]

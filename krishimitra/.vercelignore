@@ -1,0 +1,7 @@
+backend/
+ml-service/
+node_modules/
+.git/
+*.bat
+README.md
+deploy*.bat

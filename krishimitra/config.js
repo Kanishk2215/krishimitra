@@ -1,6 +1,6 @@
 const CONFIG = {
     // ⚠️ REPLACE THIS WITH YOUR RAILWAY/RENDER BACKEND URL AFTER DEPLOYING ⚠️
-    PRODUCTION_API_URL: "https://krishimitra-backend.up.railway.app",
+    PRODUCTION_API_URL: "https://krishimitra-n0ni.onrender.com",
 
     // ⚠️ REPLACE THIS WITH YOUR RENDER ML URL AFTER DEPLOYING ⚠️
     PRODUCTION_ML_URL: "https://krishimitra-ml.onrender.com",

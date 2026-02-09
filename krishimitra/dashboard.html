@@ -1992,52 +1992,88 @@
         }, 1500);
     }
 
-    // Voice Logic (Web Speech API)
-    function startListening() {
-        if (!('webkitSpeechRecognition' in window)) {
-            alert("Your browser does not support voice recognition. Please use Chrome.");
-            return;
-        }
+    // --- 🎙️ VOICE COPILOT (TAMIL) - WHISPER + CLAUDE + ELEVENLABS ---
+    let mediaRecorder;
+    let audioChunks = [];
+    let isRecording = false;
 
-        const recognition = new webkitSpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.lang = 'en-IN'; // Default to Indian English, works decently for mixed
-
+    async function toggleVoiceCopilot() {
+        const btn = document.querySelector('button[onclick="startListening()"]'); // Find the current mic button
         const visualizer = document.getElementById('voiceVisualizer');
 
-        recognition.onstart = () => {
-            visualizer.classList.remove('hidden');
-        };
+        if (!isRecording) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
 
-        recognition.onresult = (event) => {
-            const text = event.results[0][0].transcript;
-            document.getElementById('chatInput').value = text;
-            sendMessage(); // Auto send
-        };
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
 
-        recognition.onend = () => {
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    sendVoiceToAI(audioBlob);
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                visualizer.classList.remove('hidden');
+                btn.classList.add('animate-pulse', 'bg-red-500');
+            } catch (err) {
+                console.error("Mic Access Denied:", err);
+                alert("Please enable microphone access for Voice Copilot.");
+            }
+        } else {
+            mediaRecorder.stop();
+            isRecording = false;
             visualizer.classList.add('hidden');
-        };
+            btn.classList.remove('animate-pulse', 'bg-red-500');
+        }
+    }
 
-        recognition.onerror = (event) => {
-            visualizer.classList.add('hidden');
-            console.error("Speech Error:", event.error);
-            alert("Could not hear you. Please try again.");
-        };
+    async function sendVoiceToAI(blob) {
+        addMessage("🎙️ Processing your Tamil query...", 'user');
 
-        recognition.start();
+        const formData = new FormData();
+        formData.append('audio', blob, 'voice.webm');
+
+        try {
+            let baseUrl = typeof ML_URL !== 'undefined' ? ML_URL : 'http://127.0.0.1:5001';
+            const response = await fetch(`${baseUrl}/voice/chat`, {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                addMessage(result.ai_text, 'bot');
+                // Play high-quality ElevenLabs voice
+                playAIVoice(result.audio_b64);
+            } else {
+                addMessage("⚠️ Sorry, I couldn't understand that. Please try again.", 'bot');
+            }
+        } catch (err) {
+            console.error("Voice Chat Error:", err);
+            addMessage("⚠️ Voice Copilot is currently unavailable.", 'bot');
+        }
+    }
+
+    function playAIVoice(base64Audio) {
+        const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
+        audio.play();
+    }
+
+    // Replace the old function call with our new toggle
+    function startListening() {
+        toggleVoiceCopilot();
     }
 
     function speak(text) {
+        // Fallback for non-voice chat messages
         if (!('speechSynthesis' in window)) return;
-        // Clean text for better speech (remove emojis and line breaks)
-        const cleanText = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').replace(/\n/g, '. ');
-
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.lang = 'en-IN';
-        utterance.rate = 1.0;
-        utterance.pitch = 1.0;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ta-IN'; // Set to Tamil
         window.speechSynthesis.speak(utterance);
     }
 

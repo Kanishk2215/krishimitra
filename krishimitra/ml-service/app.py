@@ -315,6 +315,37 @@ def recommend_fertilizer():
         print(f"Fertilizer Recommendation Error: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+from voice_copilot import VoiceCopilot
+voice_copilot = VoiceCopilot()
+
+@app.route('/voice/chat', methods=['POST'])
+def voice_chat():
+    try:
+        if 'audio' not in request.files:
+            return jsonify({"success": False, "error": "No audio file provided"}), 400
+            
+        file = request.files['audio']
+        audio_bytes = file.read()
+        
+        result = voice_copilot.process_voice_query(audio_bytes)
+        
+        if "error" in result:
+             return jsonify({"success": False, "error": result["error"]}), 500
+
+        # Convert audio bytes to base64 to send to frontend
+        import base64
+        audio_b64 = base64.b64encode(result["ai_audio"]).decode('utf-8')
+
+        return jsonify({
+            "success": True,
+            "user_text": result["user_text"],
+            "ai_text": result["ai_text"],
+            "audio_b64": audio_b64
+        })
+    except Exception as e:
+        print(f"Voice Chat Error: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
 if __name__ == '__main__':
     # Running on 0.0.0.0 to allow access in "Online Mode" from other devices
     app.run(host='0.0.0.0', port=5001, debug=False, threaded=True)

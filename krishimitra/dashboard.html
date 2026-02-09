@@ -426,20 +426,11 @@
                     class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
             </div>
             <div class="space-y-4">
-                <div class="p-4 bg-orange-50 rounded-2xl border border-orange-100">
-                    <h4 class="font-bold text-orange-800">Krishi Seva Warehouse</h4>
-                    <p class="text-sm text-slate-600">Capacity: 500 Tons • Available: 120 Tons</p>
-                    <p class="text-xs text-slate-400 mt-1 italic">📍 4.2 km away - MIDC Road</p>
-                </div>
-                <div class="p-4 bg-green-50 rounded-2xl border border-green-100">
-                    <h4 class="font-bold text-green-800">Government Cold Storage</h4>
-                    <p class="text-sm text-slate-600">Capacity: 1000 Tons • Available: 450 Tons</p>
-                    <p class="text-xs text-slate-400 mt-1 italic">📍 8.5 km away - Highway Exit</p>
-                </div>
-                <button class="w-full py-4 bg-green-600 text-white font-bold rounded-2xl shadow-lg mt-4">Book Space
-                    Now</button>
             </div>
+            <button class="w-full py-4 bg-green-600 text-white font-bold rounded-2xl shadow-lg mt-4">Book Space
+                Now</button>
         </div>
+    </div>
     </div>
 
 
@@ -826,30 +817,9 @@
 
             <div class="space-y-4">
                 <!-- Price List -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="p-4 bg-green-50 rounded-2xl border border-green-100">
-                        <p class="text-[10px] font-bold text-green-600 uppercase">Soybean</p>
-                        <p class="text-xl font-bold text-slate-800">₹4,850 <span class="text-xs text-green-500">▲</span>
-                        </p>
-                        <p class="text-[10px] text-slate-400">per quintal</p>
-                    </div>
-                    <div class="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                        <p class="text-[10px] font-bold text-blue-600 uppercase">Cotton</p>
-                        <p class="text-xl font-bold text-slate-800">₹7,200 <span class="text-xs text-red-400">▼</span>
-                        </p>
-                        <p class="text-[10px] text-slate-400">per quintal</p>
-                    </div>
-                    <div class="p-4 bg-yellow-50 rounded-2xl border border-yellow-100">
-                        <p class="text-[10px] font-bold text-yellow-600 uppercase">Tur Dal</p>
-                        <p class="text-xl font-bold text-slate-800">₹9,400 <span class="text-xs text-green-500">▲</span>
-                        </p>
-                        <p class="text-[10px] text-slate-400">per quintal</p>
-                    </div>
-                    <div class="p-4 bg-orange-50 rounded-2xl border border-orange-100">
-                        <p class="text-[10px] font-bold text-orange-600 uppercase">Onion</p>
-                        <p class="text-xl font-bold text-slate-800">₹2,100 <span class="text-xs text-slate-400">=</span>
-                        </p>
-                        <p class="text-[10px] text-slate-400">per quintal</p>
+                <div id="mandiPricesGrid" class="grid grid-cols-2 gap-3">
+                    <div class="animate-pulse col-span-2 text-center text-xs text-slate-400 py-10">
+                        💹 Syncing with Agmarknet Live Prices...
                     </div>
                 </div>
 
@@ -938,24 +908,24 @@
 
         async function refreshOnlineData() {
             try {
-                // Fetch Weather
+                // 1. Fetch Weather
                 const weatherRes = await fetch(`${BACKEND_URL}/api/online/weather`);
                 const weather = await weatherRes.json();
                 if (weather.success) {
                     document.getElementById('weatherCity').textContent = `Live Weather - ${weather.city}`;
                     document.getElementById('weatherTemp').textContent = `${weather.temp}°C`;
                     document.getElementById('weatherDesc').textContent = weather.description;
-                    document.getElementById('weatherTips').textContent = weather.temp > 25 ? "Perfect conditions for pesticide spraying." : "Mild weather, good for fertilizer application.";
+                    document.getElementById('weatherTips').textContent = weather.forecast || "Perfect conditions for farming today.";
                 }
 
-                // Fetch News
+                // 2. Fetch Daily News
                 const newsRes = await fetch(`${BACKEND_URL}/api/online/news`);
                 const news = await newsRes.json();
                 if (news.success) {
                     const newsList = document.getElementById('marketNewsList');
                     newsList.innerHTML = news.news.map(item => `
-                        <div class="flex gap-4 p-3 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all cursor-pointer">
-                            <div class="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-xl shrink-0">📰</div>
+                        <div onclick="window.open('${item.url}', '_blank')" class="flex gap-4 p-3 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all cursor-pointer">
+                            <div class="w-12 h-12 bg-cover bg-center rounded-xl shadow-sm shrink-0" style="background-image: url('${item.img}')"></div>
                             <div>
                                 <h4 class="text-xs font-bold text-slate-800 line-clamp-2">${item.title}</h4>
                                 <p class="text-[10px] text-slate-400 font-bold uppercase mt-1">${item.source}</p>
@@ -963,8 +933,51 @@
                         </div>
                     `).join('');
                 }
+
+                // 3. Fetch Mandi Prices
+                const priceRes = await fetch(`${BACKEND_URL}/api/online/prices`);
+                const priceData = await priceRes.json();
+                if (priceData.success) {
+                    const priceGrid = document.getElementById('mandiPricesGrid');
+                    priceGrid.innerHTML = priceData.prices.map(p => `
+                        <div class="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
+                            <p class="text-[10px] font-bold ${p.trend === 'up' ? 'text-green-600' : 'text-red-600'} uppercase">${p.crop}</p>
+                            <p class="text-xl font-bold text-slate-800">₹${p.price.toLocaleString()} <span class="text-xs">${p.trend === 'up' ? '▲' : '▼'}</span></p>
+                            <p class="text-[10px] text-slate-400">${p.unit}</p>
+                        </div>
+                    `).join('');
+                }
+
+                // 4. Fetch Warehouses
+                const whRes = await fetch(`${BACKEND_URL}/api/online/warehouses`);
+                const whData = await whRes.json();
+                if (whData.success) {
+                    const whList = document.getElementById('warehouseList');
+                    whList.innerHTML = whData.warehouses.map(w => `
+                        <div class="p-4 bg-slate-50 border border-slate-100 rounded-2xl hover:border-green-300 transition-all">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="font-bold text-slate-800">${w.name}</h4>
+                                    <p class="text-xs text-slate-500">📍 ${w.location}</p>
+                                </div>
+                                <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold">${w.type}</span>
+                            </div>
+                            <div class="mt-4 flex justify-between items-end">
+                                <div>
+                                    <p class="text-[10px] text-slate-400 uppercase font-bold">Space Available</p>
+                                    <p class="text-sm font-bold text-slate-700">${w.availableSpace} / ${w.capacity}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[10px] text-green-600 font-bold">₹${w.pricePerQuintal}/qnt</p>
+                                    <button onclick="window.open('tel:${w.contact}')" class="mt-2 text-[10px] bg-green-600 text-white px-4 py-2 rounded-lg font-bold">Call Manager</button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
             } catch (err) {
-                console.error("Online Mode Error:", err);
+                console.error("Online Sync Error:", err);
             }
         }
 

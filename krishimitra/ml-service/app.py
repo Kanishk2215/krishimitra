@@ -330,17 +330,21 @@ def voice_chat():
         result = voice_copilot.process_voice_query(audio_bytes)
         
         if "error" in result:
-             return jsonify({"success": False, "error": result["error"]}), 500
+            # Return error code for browser to handle STT
+            return jsonify({"success": False, "error": result["error"], "message": result.get("message")}), 503
 
-        # Convert audio bytes to base64 to send to frontend
-        import base64
-        audio_b64 = base64.b64encode(result["ai_audio"]).decode('utf-8')
+        # Convert audio bytes to base64 if available
+        audio_b64 = None
+        if result.get("ai_audio"):
+            import base64
+            audio_b64 = base64.b64encode(result["ai_audio"]).decode('utf-8')
 
         return jsonify({
             "success": True,
-            "user_text": result["user_text"],
+            "user_text": result.get("user_text"),
             "ai_text": result["ai_text"],
-            "audio_b64": audio_b64
+            "audio_b64": audio_b64,
+            "use_browser_tts": result.get("use_browser_tts", False)
         })
     except Exception as e:
         print(f"Voice Chat Error: {e}")

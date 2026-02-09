@@ -1,102 +1,121 @@
 import random
 from datetime import datetime, timedelta
+import json
+import os
 
 class ChatAssistant:
     def __init__(self):
-        # State Management: {user_id: {"state": "diagnosing", "context": {...}}}
+        # State Management
         self.user_sessions = {}
         
-        # Knowledge Base for specific crops/problems
-        self.knowledge_graph = {
-            'deficiency': {
-                'nitrogen': {
-                    'symptoms': ['yellow leaves', 'pili', 'yellowing', 'stunted'],
-                    'solution': "Apply 15 kg Urea per acre. Ensure soil moisture before application.",
-                    'product': "Urea",
-                    'shop': "Ramesh Agro (2km)",
-                    'phone': "9876543210"
+        # Enhanced Knowledge Base with RAG-style data
+        self.knowledge_base = {
+            'crops': {
+                'soybean': {
+                    'diseases': ['bacterial blight', 'yellow mosaic', 'rust'],
+                    'fertilizer': 'Apply DAP 50kg + Urea 25kg per acre at sowing',
+                    'season': 'Kharif (June-September)',
+                    'soil': 'Black cotton soil, pH 6.5-7.5',
+                    'water': '600-1000mm rainfall needed'
                 },
-                'phosphorus': {
-                    'symptoms': ['purple leaves', 'dark green', 'slow growth'],
-                    'solution': "Apply DAP (Di-ammonium Phosphate) 50kg per acre as basal dose.",
-                    'product': "DAP",
-                    'shop': "Kisan Kendra (4km)",
-                    'phone': "9123456780"
+                'cotton': {
+                    'diseases': ['pink bollworm', 'whitefly', 'wilt'],
+                    'fertilizer': 'NPK 20:20:20 @ 50kg + Urea 30kg per acre',
+                    'season': 'Kharif',
+                    'soil': 'Black soil, well-drained',
+                    'water': '500-800mm'
+                },
+                'wheat': {
+                    'diseases': ['rust', 'smut', 'aphids'],
+                    'fertilizer': 'Urea 60kg + DAP 40kg per acre',
+                    'season': 'Rabi (October-March)',
+                    'soil': 'Alluvial, loamy',
+                    'water': '400-600mm'
                 }
+            },
+            'symptoms': {
+                'yellow leaves': {
+                    'cause': 'Nitrogen deficiency or viral infection',
+                    'solution': 'Apply Urea 15kg per acre immediately. If viral, remove infected plants.',
+                    'product': 'Urea (46% N)',
+                    'shop': 'Nearest Kisan Kendra'
+                },
+                'brown spots': {
+                    'cause': 'Fungal infection (Leaf Spot)',
+                    'solution': 'Spray Mancozeb 2.5g/L water. Repeat after 10 days.',
+                    'product': 'Mancozeb 75% WP',
+                    'shop': 'Agri Supply Store'
+                },
+                'wilting': {
+                    'cause': 'Water stress or root rot',
+                    'solution': 'Check soil moisture. If wet, reduce watering. If dry, irrigate immediately.',
+                    'product': 'Drip irrigation system recommended',
+                    'shop': 'Irrigation Equipment Dealer'
+                }
+            },
+            'weather_advice': {
+                'hot': 'Avoid spraying pesticides in afternoon. Best time: Early morning or evening.',
+                'rainy': 'Do not apply fertilizer during rain. Wait for 2 days after rain stops.',
+                'cold': 'Good time for wheat sowing. Ensure soil temperature is above 15°C.'
             }
         }
 
     def process_query(self, text, user_id="guest"):
         """
-        Process user query with context awareness and multi-turn logic.
+        Advanced RAG-style query processing with context awareness
         """
-        text = text.lower()
+        text_lower = text.lower()
         
         # Get or create session
         if user_id not in self.user_sessions:
             self.user_sessions[user_id] = {"state": "idle", "context": {}}
         
         session = self.user_sessions[user_id]
-        current_state = session["state"]
         
-        # --- STATE MACHINE LOGIC ---
+        # Intent Detection using keyword matching (RAG retrieval simulation)
+        response_text = ""
+        action = None
         
-        # STATE 1: IDLE (Start of conversation)
-        if current_state == "idle":
-            # Keyword matching for Intent
-            if any(w in text for w in ["yellow", "pili", "kamjor", "weak", "spots"]):
-                session["state"] = "diagnosing_symptom"
-                session["context"]["problem"] = "unknown_health"
-                return self._response(
-                    "Your crop might have a nutrient deficiency. Can you describe if the leaves are yellowing or have spots? Or send a photo.",
-                    action="request_photo"
-                )
-            
-            if any(w in text for w in ["weather", "mausam"]):
-                return self._response("It is 28°C and Sunny. No rain expected today.")
-                
-            if any(w in text for w in ["market", "bhav", "rate"]):
-                return self._response("Wheat: ₹2125/q | Rice: ₹1950/q at Local Mandi.")
-                
-            # Default Greeting
-            return self._response("Namaste! I can help with Crop Health, Fertilizer, Weather, or Market Prices. What do you need?")
-
-        # STATE 2: DIAGNOSING (User confirmed symptom or sent photo)
-        elif current_state == "diagnosing_symptom":
-            # Heuristic: Check for specific symptoms in text or assume photo confirmation
-            if "nitrogen" in text or "urea" in text or "yellow" in text or "photo" in text:
-                # Diagnosis Confirmed
-                deficiency = self.knowledge_graph['deficiency']['nitrogen']
-                session["state"] = "solution_proposed"
-                session["context"]["diagnosis"] = "nitrogen"
-                
-                reply = (
-                    f"✅ Confirmed: Nitrogen Deficiency.\n"
-                    f"💊 Solution: {deficiency['solution']}\n"
-                    f"🏪 Nearby: {deficiency['shop']} (📞 {deficiency['phone']})\n\n"
-                    f"Should I set a reminder for tomorrow?"
-                )
-                return self._response(reply, action="show_shop_map")
-            
-            else:
-                 return self._response("I couldn't identify that significantly. Could you upload a clear photo?")
-
-        # STATE 3: SOLUTION PROPOSED (Waiting for reminder confirmation)
-        elif current_state == "solution_proposed":
-            if any(w in text for w in ["yes", "ha", "han", "ok", "reminder", "alert"]):
-                session["state"] = "idle" # Reset
-                reminder_time = (datetime.now() + timedelta(days=1)).strftime("%I:%M %p")
-                return self._response(f"✅ Alert set for tomorrow at {reminder_time}. I will remind you to apply Urea.")
-            
-            elif any(w in text for w in ["no", "nahi"]):
-                session["state"] = "idle"
-                return self._response("Okay, no reminder set. Let me know if you need anything else.")
-                
-            return self._response("Should I set a reminder? (Yes/No)")
-
-        # Fallback reset
-        session["state"] = "idle"
-        return self._response("I didn't understand. Let's start over. How can I help?")
+        # 1. Crop-specific queries
+        for crop, info in self.knowledge_base['crops'].items():
+            if crop in text_lower:
+                if 'fertilizer' in text_lower or 'khad' in text_lower:
+                    response_text = f"✅ {crop.title()} Fertilizer Plan:\n{info['fertilizer']}\n\n📍 Buy from your nearest Kisan Kendra."
+                elif 'disease' in text_lower or 'bimari' in text_lower:
+                    response_text = f"⚠️ Common {crop.title()} diseases:\n" + "\n".join([f"• {d.title()}" for d in info['diseases']])
+                    response_text += "\n\nSend a photo for accurate diagnosis."
+                    action = "request_photo"
+                elif 'season' in text_lower or 'mausam' in text_lower:
+                    response_text = f"🌾 {crop.title()} Season: {info['season']}\nSoil: {info['soil']}\nWater: {info['water']}"
+                else:
+                    response_text = f"📚 {crop.title()} Info:\n• Season: {info['season']}\n• Soil: {info['soil']}\n• Water: {info['water']}\n\nWhat would you like to know? (fertilizer/disease/season)"
+                break
+        
+        # 2. Symptom-based diagnosis
+        if not response_text:
+            for symptom, details in self.knowledge_base['symptoms'].items():
+                if symptom in text_lower or any(word in text_lower for word in symptom.split()):
+                    response_text = f"🔍 Diagnosis: {details['cause']}\n\n💊 Solution:\n{details['solution']}\n\n🛒 Product: {details['product']}\n📍 Available at: {details['shop']}"
+                    session["state"] = "solution_proposed"
+                    break
+        
+        # 3. Weather-related queries
+        if not response_text and any(w in text_lower for w in ['weather', 'mausam', 'temperature', 'rain']):
+            response_text = "🌦️ Current Weather: 28°C, Clear Sky\n\n" + self.knowledge_base['weather_advice']['hot']
+        
+        # 4. Market prices
+        if not response_text and any(w in text_lower for w in ['price', 'bhav', 'market', 'mandi']):
+            response_text = "💹 Today's Mandi Rates:\n• Soybean: ₹4,850/q ▲\n• Cotton: ₹7,200/q ▼\n• Wheat: ₹2,350/q ▲\n\n(Nashik Main Mandi)"
+        
+        # 5. Greeting
+        if not response_text and any(w in text_lower for w in ['hello', 'hi', 'namaste', 'hey']):
+            response_text = "🙏 Namaste! I am KrishiMitra AI.\n\nI can help you with:\n🌾 Crop advice\n💊 Disease diagnosis\n🌦️ Weather updates\n💹 Market prices\n\nWhat do you need today?"
+        
+        # 6. Fallback
+        if not response_text:
+            response_text = "I understand you're asking about farming. Could you be more specific?\n\nTry asking:\n• 'Soybean fertilizer plan'\n• 'My crop has yellow leaves'\n• 'Today's market price'\n• 'Weather advice'"
+        
+        return self._response(response_text, action)
 
     def _response(self, text, action=None):
         return {

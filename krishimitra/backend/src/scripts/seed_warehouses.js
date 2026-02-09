@@ -1,9 +1,10 @@
 const Warehouse = require('../models/Warehouse');
-const { connectDB } = require('../config/database');
+const { connectDB, sequelize } = require('../config/database');
 
 const seedWarehouses = async () => {
     try {
         await connectDB();
+        await sequelize.sync({ alter: true }); // Create tables if they don't exist
 
         const data = [
             {

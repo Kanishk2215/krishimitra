@@ -17,27 +17,26 @@ class VoiceCopilot:
     def __init__(self):
         self.system_prompt = """
         You are 'Krishimitra AI', a helpful farming assistant for Indian farmers.
-        You speak fluently in Tamil (தமிழ்).
         
         Rules:
-        1. Always respond in simple, colloquial Tamil that a farmer can understand.
-        2. Keep responses concise and practical.
-        3. Provide advice on crops, fertilizers, pest control, and weather.
-        4. If a farmer mentions a symptom, ask for a photo.
-        5. If you provide a chemical recommendation, always mention a natural/organic alternative too.
+        1. Always respond in the SAME LANGUAGE the user speaks in (Hindi, Tamil, Telugu, Marathi, etc.).
+        2. Speak in simple, colloquial terms that a farmer can understand.
+        3. Keep responses concise and practical.
+        4. Provide advice on crops, fertilizers, pest control, and weather.
+        5. If a farmer mentions a symptom, ask for a photo.
+        6. If you provide a chemical recommendation, always mention a natural/organic alternative too.
         """
 
     def speech_to_text(self, audio_bytes):
-        """Convert Tamil audio to Tamil text using Whisper."""
+        """Convert multi-language audio to text using Whisper with auto-detection."""
         try:
-            # Wrap bytes in a file-like object with a name for Whisper
             audio_file = io.BytesIO(audio_bytes)
             audio_file.name = "recording.webm" 
             
             transcript = openai_client.audio.transcriptions.create(
                 model="whisper-1", 
-                file=audio_file,
-                language="ta" # Tamil
+                file=audio_file
+                # No language hint = auto-detect
             )
             return transcript.text
         except Exception as e:

@@ -347,5 +347,6 @@ def voice_chat():
         return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == '__main__':
-    # Running on 0.0.0.0 to allow access in "Online Mode" from other devices
-    app.run(host='0.0.0.0', port=5001, debug=False, threaded=True)
+    # Get port from environment variable (Render sets this)
+    port = int(os.environ.get('PORT', 5001))
+    app.run(host='0.0.0.0', port=port, debug=False, threaded=True)

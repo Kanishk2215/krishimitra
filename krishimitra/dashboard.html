@@ -2005,13 +2005,13 @@
         }, 1500);
     }
 
-    // --- 🎙️ VOICE COPILOT (MULTI-LANGUAGE) - WITH SMART FALLBACKS ---
+    // --- 🎙️ VOICE COPILOT (TAMIL) - WHISPER + CLAUDE + ELEVENLABS ---
     let mediaRecorder;
     let audioChunks = [];
     let isRecording = false;
 
     async function toggleVoiceCopilot() {
-        const btn = document.querySelector('button[onclick="startListening()"]');
+        const btn = document.querySelector('button[onclick="startListening()"]'); // Find the current mic button
         const visualizer = document.getElementById('voiceVisualizer');
 
         if (!isRecording) {
@@ -2046,7 +2046,7 @@
     }
 
     async function sendVoiceToAI(blob) {
-        addMessage("🎙️ Processing your query...", 'user');
+        addMessage("🎙️ Processing your Tamil query...", 'user');
 
         const formData = new FormData();
         formData.append('audio', blob, 'voice.webm');
@@ -2059,86 +2059,17 @@
             });
 
             const result = await response.json();
-
-            // Check if server returned STT unavailable
-            if (!result.success && result.error === 'STT_UNAVAILABLE') {
-                // Fallback to browser speech recognition
-                useBrowserVoiceRecognition();
-                return;
-            }
-
             if (result.success) {
                 addMessage(result.ai_text, 'bot');
-
-                // Use high-quality voice if available, else browser TTS
-                if (result.audio_b64 && !result.use_browser_tts) {
-                    playAIVoice(result.audio_b64);
-                } else {
-                    speak(result.ai_text);
-                }
+                // Play high-quality ElevenLabs voice
+                playAIVoice(result.audio_b64);
             } else {
                 addMessage("⚠️ Sorry, I couldn't understand that. Please try again.", 'bot');
             }
         } catch (err) {
             console.error("Voice Chat Error:", err);
-            // Fallback to browser-based voice
-            addMessage("⚠️ Voice Copilot server unavailable. Switching to browser mode...", 'bot');
-            useBrowserVoiceRecognition();
+            addMessage("⚠️ Voice Copilot is currently unavailable.", 'bot');
         }
-    }
-
-    function useBrowserVoiceRecognition() {
-        if (!('webkitSpeechRecognition' in window)) {
-            alert("Your browser does not support voice recognition. Please use Chrome.");
-            return;
-        }
-
-        const recognition = new webkitSpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.lang = 'hi-IN'; // Default Hindi, auto-detects others
-
-        const visualizer = document.getElementById('voiceVisualizer');
-
-        recognition.onstart = () => {
-            visualizer.classList.remove('hidden');
-            addMessage("🎙️ Listening (Browser Mode)...", 'user');
-        };
-
-        recognition.onresult = async (event) => {
-            const text = event.results[0][0].transcript;
-            addMessage(text, 'user');
-
-            // Send to text-based chatbot
-            try {
-                let baseUrl = typeof ML_URL !== 'undefined' ? ML_URL : 'http://127.0.0.1:5001';
-                const response = await fetch(`${baseUrl}/chat/send`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text, user_id: farmer.phone || 'guest' })
-                });
-
-                const json = await response.json();
-                if (json.success) {
-                    addMessage(json.data.response, 'bot');
-                    speak(json.data.response);
-                }
-            } catch (e) {
-                addMessage("⚠️ Connection error. Please try again.", 'bot');
-            }
-        };
-
-        recognition.onend = () => {
-            visualizer.classList.add('hidden');
-        };
-
-        recognition.onerror = (event) => {
-            visualizer.classList.add('hidden');
-            console.error("Speech Error:", event.error);
-            addMessage("⚠️ Could not hear you. Please try again.", 'bot');
-        };
-
-        recognition.start();
     }
 
     function playAIVoice(base64Audio) {
@@ -2152,10 +2083,10 @@
     }
 
     function speak(text) {
-        // Browser TTS fallback
+        // Fallback for non-voice chat messages
         if (!('speechSynthesis' in window)) return;
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'hi-IN'; // Default to Hindi
+        utterance.lang = 'ta-IN'; // Set to Tamil
         window.speechSynthesis.speak(utterance);
     }
 

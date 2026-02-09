@@ -4,9 +4,10 @@ services:
     name: krishimitra-backend
     env: node
     plan: free
-    repo: https://github.com/Kanishk2215/krishimitra # This will be auto-detected if connected via UI
-    buildCommand: cd backend && npm install
-    startCommand: cd backend && npm start
+    repo: https://github.com/Kanishk2215/krishimitra
+    rootDirectory: krishimitra/backend
+    buildCommand: npm install
+    startCommand: npm start
     envVars:
       - key: PORT
         value: 5000
@@ -23,8 +24,9 @@ services:
     env: python
     plan: free
     repo: https://github.com/Kanishk2215/krishimitra
-    buildCommand: cd ml-service && pip install -r requirements.txt
-    startCommand: cd ml-service && gunicorn app:app
+    rootDirectory: krishimitra/ml-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT app:app
     envVars:
       - key: PORT
         value: 5001

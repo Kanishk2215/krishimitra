@@ -9,6 +9,7 @@
     <!-- Tailwind CSS with custom configuration -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+        // Custom Tailwind configuration
         tailwind.config = {
             theme: {
                 extend: {
@@ -20,6 +21,15 @@
                 }
             }
         }
+
+        // Suppress CDN warning in production
+        const originalWarn = console.warn;
+        console.warn = function (...args) {
+            if (args[0] && args[0].includes('cdn.tailwindcss.com')) {
+                return; // Suppress Tailwind CDN warning
+            }
+            originalWarn.apply(console, args);
+        };
     </script>
 
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">

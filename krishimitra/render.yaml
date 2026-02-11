@@ -30,16 +30,16 @@ services:
       - key: PYTHON_VERSION
         value: 3.10.0
 
-  # 3. Frontend (Static Site)
-  - type: web
-    name: krishimitra-web
-    env: static
-    repo: https://github.com/Kanishk2215/krishimitra
-    rootDir: krishimitra
-    buildCommand: echo "Building Static Site..."
-    staticPublishPath: .
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /dashboard.html
+  # 3. Frontend (Static Site) - DEPRECATED (Moved to Backend Service)
+  # - type: web
+  #   name: krishimitra-web
+  #   env: static
+  #   repo: https://github.com/Kanishk2215/krishimitra
+  #   rootDir: krishimitra
+  #   buildCommand: echo "Building Static Site..."
+  #   staticPublishPath: .
+  #   routes:
+  #     - type: rewrite
+  #       source: /*
+  #       destination: /dashboard.html
 

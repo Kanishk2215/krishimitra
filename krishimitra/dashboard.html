@@ -568,18 +568,21 @@
             <div id="doctorUploadArea" class="space-y-6">
                 <!-- Initial Options -->
                 <div id="initialUploadState" class="grid grid-cols-2 gap-4">
-                    <button onclick="document.getElementById('leafImage').click()"
+                    <button onclick="document.getElementById('cameraInput').click()"
                         class="p-6 bg-green-50 rounded-3xl border-2 border-dashed border-green-200 hover:bg-green-100 transition-all text-center group">
                         <div class="text-3xl mb-2 group-hover:scale-110 transition-transform">📸</div>
                         <p class="text-xs font-bold text-green-700">Take Photo</p>
                     </button>
-                    <button onclick="document.getElementById('leafImage').click()"
+                    <button onclick="document.getElementById('galleryInput').click()"
                         class="p-6 bg-blue-50 rounded-3xl border-2 border-dashed border-blue-200 hover:bg-blue-100 transition-all text-center group">
                         <div class="text-3xl mb-2 group-hover:scale-110 transition-transform">🖼️</div>
                         <p class="text-xs font-bold text-blue-700">From Gallery</p>
                     </button>
                 </div>
-                <input type="file" id="leafImage" class="hidden" accept="image/*" onchange="handleDoctorUpload(event)">
+                <!-- Camera Input (Direct) -->
+                <input type="file" id="cameraInput" class="hidden" accept="image/*" capture="environment" onchange="handleDoctorUpload(event)">
+                <!-- Gallery Input (Standard) -->
+                <input type="file" id="galleryInput" class="hidden" accept="image/*" onchange="handleDoctorUpload(event)">
 
                 <!-- Live Scanner Preview (Shown after selection) -->
                 <div id="liveScannerPreview" class="hidden space-y-4">

@@ -2283,12 +2283,10 @@
                     localStorage.setItem('krishimitra_location', JSON.stringify(locationData));
 
                     showLocationMessage(`✅ Location Found: ${displayName}`, 'success');
-                    loadSavedLocation();
 
-                    setTimeout(() => {
-                        closeModal('locationSettingsModal');
-                        window.location.reload();
-                    }, 1500);
+                    // Instant Update
+                    setTimeout(() => refreshAppLocation(), 1000);
+
                 } catch (error) {
                     console.error('Error fetching address:', error);
                     // Fallback if API fails
@@ -2303,7 +2301,7 @@
                     };
                     localStorage.setItem('krishimitra_location', JSON.stringify(locationData));
                     showLocationMessage('⚠️ GPS found, but address name unavailable.', 'success');
-                    window.location.reload();
+                    setTimeout(() => refreshAppLocation(), 1000);
                 }
 
                 btn.textContent = '📍 Detect My Location';
@@ -2358,7 +2356,7 @@
             const locationData = {
                 latitude: parseFloat(bestMatch.lat),
                 longitude: parseFloat(bestMatch.lon),
-                city: query, // User typed name
+                city: displayName.split(',')[0], // Use first part as city
                 display_name: displayName,
                 method: 'manual',
                 savedAt: new Date().toISOString()
@@ -2367,19 +2365,16 @@
             localStorage.setItem('krishimitra_location', JSON.stringify(locationData));
 
             showLocationMessage(`✅ Found: ${displayName}`, 'success');
-            loadSavedLocation();
 
-            setTimeout(() => {
-                closeModal('locationSettingsModal');
-                window.location.reload();
-            }, 1000);
+            // Instant Update
+            setTimeout(() => refreshAppLocation(), 1000);
 
         } catch (error) {
             console.error(error);
             showLocationMessage('⚠️ Search failed. Check internet connection.', 'error');
         }
 
-        btn.textContent = '💾 Save Location';
+        btn.textContent = '💾 Search & Save Location';
         btn.disabled = false;
     }
 
@@ -2389,7 +2384,21 @@
         document.getElementById('currentLocationDisplay').classList.add('hidden');
         document.getElementById('profileLocation').textContent = 'Set Location';
         showLocationMessage('✅ Location cleared.', 'success');
-        setTimeout(() => window.location.reload(), 1000);
+        setTimeout(() => refreshAppLocation(), 1000);
+    }
+
+    // Central Function to Refresh All Location-Dependent Data
+    function refreshAppLocation() {
+        closeModal('locationSettingsModal');
+        loadSavedLocation();
+        updateWeatherUI();
+        populateMarketNews();
+        // Add visual feedback
+        const weatherCard = document.querySelector('#dashboardSection > div[onclick="showModal(\'weatherModal\')"]');
+        if (weatherCard) {
+            weatherCard.classList.add('ring-4', 'ring-green-400');
+            setTimeout(() => weatherCard.classList.remove('ring-4', 'ring-green-400'), 1000);
+        }
     }
 
     // Show message

@@ -318,6 +318,17 @@
                     </button>
                 </div>
                 <div class="p-4 bg-slate-50 rounded-2xl flex items-center gap-4">
+                    <div class="p-2 bg-white rounded-xl shadow-sm italic">🌐</div>
+                    <div class="flex-1">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Language</p>
+                        <p class="font-bold text-slate-700" id="profileLanguage">English</p>
+                    </div>
+                    <button onclick="showModal('langModal')"
+                        class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-lg transition-all">
+                        ✏️ Change
+                    </button>
+                </div>
+                <div class="p-4 bg-slate-50 rounded-2xl flex items-center gap-4">
                     <div class="p-2 bg-white rounded-xl shadow-sm italic">🚜</div>
                     <div>
                         <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Account Status</p>
@@ -2828,10 +2839,15 @@
     function setLanguage(langCode, reload = true) {
         localStorage.setItem('krishimitra_lang', langCode);
 
-        // Update Button Label
+        // Update Button Label & Profile Label
         const langObj = supportedLanguages.find(l => l.code === langCode);
         const label = document.getElementById('currentLangLabel');
-        if (label && langObj) label.textContent = langObj.name.split(' ')[0]; // Show short name
+        const profileLabel = document.getElementById('profileLanguage');
+
+        if (langObj) {
+            if (label) label.textContent = langObj.name.split(' ')[0]; // Short name in nav
+            if (profileLabel) profileLabel.textContent = langObj.name; // Full name in profile
+        }
 
         // Apply Translations
         const dict = translations[langCode] || translations['en'];

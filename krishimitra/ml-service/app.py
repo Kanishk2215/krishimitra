@@ -8,7 +8,29 @@ from PIL import Image
 import io
 
 app = Flask(__name__)
-CORS(app)
+# Enable CORS for all routes and origins
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+
+# Add explicit OPTIONS handling for preflight requests
+@app.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        response = app.make_default_options_response()
+        headers = None
+        if 'Access-Control-Request-Headers' in request.headers:
+            headers = request.headers['Access-Control-Request-Headers']
+        h = response.headers
+        h['Access-Control-Allow-Origin'] = '*'
+        h['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+        h['Access-Control-Allow-Headers'] = headers if headers else 'Content-Type, Authorization'
+        return response
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    return response
 
 # Helper function to detect diseased spots (simulation of CNN detection)
 def detect_lesions(image_bytes):

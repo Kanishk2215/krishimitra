@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 import json
 import os
 import random
@@ -95,9 +95,14 @@ CROP_DATA = [
     {"name": "Maize", "soil_type": "Alluvial", "season": "Kharif", "base_income": 35000}
 ]
 
-@app.route('/recommend', methods=['POST'])
+@app.route('/recommend', methods=['POST', 'OPTIONS'])
+@cross_origin()
 def recommend():
     try:
+        # Handle OPTIONS explicitly if needed (though cross_origin usually does it)
+        if request.method == 'OPTIONS':
+            return jsonify({'status': 'ok'}), 200
+            
         data = request.json or {}
         soil_type = data.get('soil_type', 'Black')
         season = data.get('season', 'Kharif')
@@ -138,9 +143,13 @@ def recommend():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
-@app.route('/analyze-disease', methods=['POST'])
+@app.route('/analyze-disease', methods=['POST', 'OPTIONS'])
+@cross_origin()
 def analyze_disease():
     try:
+        if request.method == 'OPTIONS':
+            return jsonify({'status': 'ok'}), 200
+
         # Get image from request
         if 'image' not in request.files:
             # Fallback for testing

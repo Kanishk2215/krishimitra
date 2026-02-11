@@ -38,7 +38,6 @@ services:
   - type: web
     name: krishimitra-frontend
     env: static
-    plan: free
     repo: https://github.com/Kanishk2215/krishimitra
     rootDir: krishimitra
     buildCommand: echo "Building Static Site..."

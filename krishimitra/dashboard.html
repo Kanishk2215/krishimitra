@@ -2607,76 +2607,87 @@
         if (newsList) {
             newsList.innerHTML = '<div class="animate-pulse text-xs text-slate-400 font-bold">📡 Fetching real-time news...</div>';
 
-            // Use Google News RSS for Agriculture + City
+            // Use Google News RSS (via AllOrigins Proxy to bypass CORS)
             const rssUrl = `https://news.google.com/rss/search?q=Agriculture+Farming+India+${encodeURIComponent(city)}&hl=en-IN&gl=IN&ceid=IN:en`;
-            const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`;
 
-            fetch(apiUrl)
-                .then(response => response.json())
+            fetch(proxyUrl)
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
                 .then(data => {
-                    if (data.status === 'ok' && data.items.length > 0) {
-                        // We have REAL news!
-                        const items = data.items.slice(0, 5); // Take top 5
+                    if (!data.contents) throw new Error('No content data');
 
-                        newsList.innerHTML = items.map(news => {
-                            const date = new Date(news.pubDate);
-                            const timeAgo = Math.floor((new Date() - date) / 3600000); // Hours ago
-                            const timeDisplay = timeAgo < 1 ? 'Just now' : `${timeAgo}h ago`;
-                            const sourceName = news.author || "News Source"; // Author is often empty in RSS, fallback
+                    // Parse XML content
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(data.contents, "text/xml");
+                    const items = Array.from(xmlDoc.querySelectorAll("item")).slice(0, 5);
+
+                    if (items.length > 0) {
+                        newsList.innerHTML = items.map(item => {
+                            const title = item.querySelector("title").textContent;
+                            const link = item.querySelector("link").textContent;
+                            const pubDateStr = item.querySelector("pubDate")?.textContent;
+                            const pubDate = pubDateStr ? new Date(pubDateStr) : new Date();
+                            const source = item.querySelector("source") ? item.querySelector("source").textContent : "News Source";
+
+                            const timeAgo = Math.floor((new Date() - pubDate) / 3600000); // Hours
+                            const timeDisplay = timeAgo < 1 ? 'Just now' : timeAgo > 24 ? `${Math.floor(timeAgo / 24)}d ago` : `${timeAgo}h ago`;
 
                             return `
-                        <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 hover:bg-white transition-colors">
-                            <a href="${news.link}" target="_blank" class="block">
-                                <h5 class="font-bold text-slate-800 text-sm mb-1 line-clamp-2 hover:text-blue-600 hover:underline">${news.title}</h5>
+                            <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 hover:bg-white transition-colors cursor-pointer group" onclick="window.open('${link}', '_blank')">
+                                <h5 class="font-bold text-slate-800 text-sm mb-1 line-clamp-2 group-hover:text-blue-600 group-hover:underline">${title}</h5>
                                 <div class="flex justify-between items-center text-[10px] text-slate-500 font-medium">
-                                    <span>📰 ${sourceName}</span>
+                                    <span>📰 ${source}</span>
                                     <span>🕒 ${timeDisplay}</span>
                                 </div>
-                            </a>
-                        </div>
-                        `;
+                            </div>
+                            `;
                         }).join('');
                     } else {
-                        throw new Error("No news found");
+                        throw new Error("No items found in RSS");
                     }
                 })
                 .catch(err => {
-                    console.warn("News API failed, showing logic-based updates:", err);
+                    console.warn("News Proxy failed, showing simulated updates:", err);
 
-                    // FALLBACK: Generate Local Logic-Based News (Simulated)
+                    // FALLBACK: Dynamic Simulated News
                     const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+                    const timeNow = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+
                     const newsItems = [
                         {
-                            title: `Harvest season updates for ${city} region farmers.`,
-                            source: "Local Agri Office",
-                            time: "2h ago"
+                            title: `Latest Mandi Rates for ${city}: Tomato and Onion prices stable.`,
+                            source: "Local Mandi",
+                            time: timeNow
                         },
                         {
-                            title: "New government schemes for organic fertilizers announced.",
-                            source: "Ministry of Agriculture",
-                            time: "5h ago"
-                        },
-                        {
-                            title: `Market prices for Tomato and Onion stabilize in ${city}.`,
-                            source: "Mandi Report",
-                            time: `Today, ${today}`
-                        },
-                        {
-                            title: "IMD predicts favorable monsoon conditions for next week.",
+                            title: `Weather Alert: Light rain possibility in ${city} district over next 24h.`,
                             source: "Weather Dept",
+                            time: "1 hour ago"
+                        },
+                        {
+                            title: "Govt announces 50% subsidy on Solar Pumps for farmers.",
+                            source: "Kisan Yojana",
+                            time: "Today"
+                        },
+                        {
+                            title: `Organic Farming training camp organized near ${city}.`,
+                            source: "Agri Community",
                             time: "Yesterday"
                         }
                     ];
 
                     newsList.innerHTML = newsItems.map(news => `
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                        <h5 class="font-bold text-slate-800 text-sm mb-1 line-clamp-2">${news.title}</h5>
-                        <div class="flex justify-between items-center text-[10px] text-slate-500 font-medium">
-                            <span>📰 ${news.source}</span>
-                            <span>🕒 ${news.time}</span>
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                            <h5 class="font-bold text-slate-800 text-sm mb-1 line-clamp-2">${news.title}</h5>
+                            <div class="flex justify-between items-center text-[10px] text-slate-500 font-medium">
+                                <span>📰 ${news.source}</span>
+                                <span>🕒 ${news.time}</span>
+                            </div>
                         </div>
-                    </div>
-                `).join('');
+                    `).join('');
                 });
         }
     }

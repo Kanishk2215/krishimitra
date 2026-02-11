@@ -3,8 +3,8 @@ const CONFIG = {
     HOST_ID: "krishimitra-live-hq",
 
     // ⚠️ Production URLs (Render/Vercel)
-    PRODUCTION_API_URL: "https://krishimitra-1-cnf1.onrender.com",
-    PRODUCTION_ML_URL: "https://krishimitra-j4oo.onrender.com",
+    PRODUCTION_API_URL: "https://krishimitra-backend-api-cnsc.onrender.com",
+    PRODUCTION_ML_URL: "https://krishimitra-ml-service-cnsc.onrender.com",
 
     // Default Local URLs
     LOCAL_API_URL: "http://localhost:5000",

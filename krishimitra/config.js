@@ -4,7 +4,7 @@ const CONFIG = {
 
     // ⚠️ Production URLs (Render/Vercel)
     PRODUCTION_API_URL: "https://krishimitra-1-cnf1.onrender.com",
-    PRODUCTION_ML_URL: "https://krishimitra-ml.onrender.com",
+    PRODUCTION_ML_URL: "https://krishimitra-j4oo.onrender.com",
 
     // Default Local URLs
     LOCAL_API_URL: "http://localhost:5000",

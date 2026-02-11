@@ -284,10 +284,14 @@
                 </div>
                 <div class="p-4 bg-slate-50 rounded-2xl flex items-center gap-4">
                     <div class="p-2 bg-white rounded-xl shadow-sm italic">📍</div>
-                    <div>
+                    <div class="flex-1">
                         <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Location</p>
-                        <p class="font-bold text-slate-700">Nashik, Maharashtra</p>
+                        <p class="font-bold text-slate-700" id="profileLocation">Loading...</p>
                     </div>
+                    <button onclick="showModal('locationSettingsModal')"
+                        class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold rounded-lg transition-all">
+                        ✏️ Edit
+                    </button>
                 </div>
                 <div class="p-4 bg-slate-50 rounded-2xl flex items-center gap-4">
                     <div class="p-2 bg-white rounded-xl shadow-sm italic">🚜</div>
@@ -439,6 +443,136 @@
     </div>
 
 
+    <!-- 📍 Location Settings Modal (NEW) -->
+    <div id="locationSettingsModal"
+        class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+        <div
+            class="bg-white w-full max-w-2xl rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-slate-800">📍 Location Settings</h3>
+                <button onclick="closeModal('locationSettingsModal')"
+                    class="text-slate-400 hover:text-slate-600 text-3xl">&times;</button>
+            </div>
+
+            <!-- Current Location Display -->
+            <div id="currentLocationDisplay"
+                class="hidden mb-6 p-4 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl text-white">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        <span class="text-3xl">📍</span>
+                        <div>
+                            <p class="font-bold text-lg" id="currentLocationCity">Mumbai, Maharashtra</p>
+                            <p class="text-sm opacity-90" id="currentLocationMethod">Auto-detected</p>
+                        </div>
+                    </div>
+                    <button onclick="clearLocation()"
+                        class="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-semibold transition-all">
+                        Clear
+                    </button>
+                </div>
+            </div>
+
+            <!-- Method Selection -->
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <button id="autoDetectBtn" onclick="selectLocationMethod('auto')"
+                    class="p-6 border-2 border-green-500 bg-green-50 rounded-2xl flex flex-col items-center gap-2 transition-all">
+                    <span class="text-4xl">🎯</span>
+                    <span class="font-semibold text-green-700">Auto-Detect</span>
+                </button>
+                <button id="manualEntryBtn" onclick="selectLocationMethod('manual')"
+                    class="p-6 border-2 border-slate-200 bg-white rounded-2xl flex flex-col items-center gap-2 hover:border-green-500 hover:bg-green-50 transition-all">
+                    <span class="text-4xl">✏️</span>
+                    <span class="font-semibold text-slate-700">Manual Entry</span>
+                </button>
+            </div>
+
+            <!-- Auto-Detect Content -->
+            <div id="autoDetectContent" class="space-y-4">
+                <div class="bg-slate-50 p-4 rounded-xl">
+                    <p class="text-sm text-slate-700">📍 Use your device's GPS to automatically detect your location.
+                    </p>
+                    <p class="text-xs text-slate-500 mt-2 italic">You'll be asked to allow location access.</p>
+                </div>
+                <button onclick="detectLocation()" id="detectBtn"
+                    class="w-full py-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-all">
+                    📍 Detect My Location
+                </button>
+            </div>
+
+            <!-- Manual Entry Content -->
+            <div id="manualEntryContent" class="hidden space-y-4">
+                <div class="bg-slate-50 p-4 rounded-xl">
+                    <p class="text-sm text-slate-700">✏️ Enter your city name manually.</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">City Name *</label>
+                    <input type="text" id="manualCity" list="citySuggestions"
+                        placeholder="e.g., Mumbai, Delhi, Bangalore"
+                        class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-green-500 focus:outline-none transition-all">
+                    <datalist id="citySuggestions">
+                        <option value="Mumbai">
+                        <option value="Delhi">
+                        <option value="Bangalore">
+                        <option value="Chennai">
+                        <option value="Kolkata">
+                        <option value="Hyderabad">
+                        <option value="Pune">
+                        <option value="Ahmedabad">
+                        <option value="Surat">
+                        <option value="Jaipur">
+                        <option value="Lucknow">
+                        <option value="Kanpur">
+                        <option value="Nagpur">
+                        <option value="Indore">
+                        <option value="Nashik">
+                        <option value="Thane">
+                        <option value="Bhopal">
+                        <option value="Visakhapatnam">
+                        <option value="Patna">
+                        <option value="Vadodara">
+                    </datalist>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">State (Optional)</label>
+                    <select id="manualState"
+                        class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-green-500 focus:outline-none transition-all">
+                        <option value="">Select State</option>
+                        <option value="Maharashtra">Maharashtra</option>
+                        <option value="Delhi">Delhi</option>
+                        <option value="Karnataka">Karnataka</option>
+                        <option value="Tamil Nadu">Tamil Nadu</option>
+                        <option value="West Bengal">West Bengal</option>
+                        <option value="Telangana">Telangana</option>
+                        <option value="Gujarat">Gujarat</option>
+                        <option value="Rajasthan">Rajasthan</option>
+                        <option value="Uttar Pradesh">Uttar Pradesh</option>
+                        <option value="Madhya Pradesh">Madhya Pradesh</option>
+                        <option value="Andhra Pradesh">Andhra Pradesh</option>
+                        <option value="Bihar">Bihar</option>
+                        <option value="Punjab">Punjab</option>
+                        <option value="Haryana">Haryana</option>
+                    </select>
+                </div>
+
+                <button onclick="saveManualLocation()" id="saveLocationBtn"
+                    class="w-full py-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-all">
+                    💾 Save Location
+                </button>
+
+                <div class="bg-yellow-50 p-4 rounded-xl border-l-4 border-yellow-400">
+                    <p class="text-xs text-yellow-800">
+                        <strong>Supported Cities:</strong> Mumbai, Delhi, Bangalore, Chennai, Kolkata, Hyderabad, Pune,
+                        Ahmedabad, Nashik, and 20+ more major cities.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Success/Error Messages -->
+            <div id="locationMessage" class="hidden mt-4 p-4 rounded-xl"></div>
+        </div>
+    </div>
 
     <!-- ✨ Plan My Crop Modal -->
     <div id="planModal"
@@ -2101,6 +2235,249 @@
     document.getElementById('chatInput').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') sendMessage();
     });
+
+    // ========================================
+    // 📍 LOCATION SETTINGS FUNCTIONS
+    // ========================================
+
+    // City coordinates database
+    const cityCoordinates = {
+        'Mumbai': { lat: 19.0760, lon: 72.8777, state: 'Maharashtra' },
+        'Delhi': { lat: 28.7041, lon: 77.1025, state: 'Delhi' },
+        'Bangalore': { lat: 12.9716, lon: 77.5946, state: 'Karnataka' },
+        'Bengaluru': { lat: 12.9716, lon: 77.5946, state: 'Karnataka' },
+        'Chennai': { lat: 13.0827, lon: 80.2707, state: 'Tamil Nadu' },
+        'Kolkata': { lat: 22.5726, lon: 88.3639, state: 'West Bengal' },
+        'Hyderabad': { lat: 17.3850, lon: 78.4867, state: 'Telangana' },
+        'Pune': { lat: 18.5204, lon: 73.8567, state: 'Maharashtra' },
+        'Ahmedabad': { lat: 23.0225, lon: 72.5714, state: 'Gujarat' },
+        'Surat': { lat: 21.1702, lon: 72.8311, state: 'Gujarat' },
+        'Jaipur': { lat: 26.9124, lon: 75.7873, state: 'Rajasthan' },
+        'Lucknow': { lat: 26.8467, lon: 80.9462, state: 'Uttar Pradesh' },
+        'Kanpur': { lat: 26.4499, lon: 80.3319, state: 'Uttar Pradesh' },
+        'Nagpur': { lat: 21.1458, lon: 79.0882, state: 'Maharashtra' },
+        'Indore': { lat: 22.7196, lon: 75.8577, state: 'Madhya Pradesh' },
+        'Nashik': { lat: 19.9975, lon: 73.7898, state: 'Maharashtra' },
+        'Thane': { lat: 19.2183, lon: 72.9781, state: 'Maharashtra' },
+        'Bhopal': { lat: 23.2599, lon: 77.4126, state: 'Madhya Pradesh' },
+        'Visakhapatnam': { lat: 17.6868, lon: 83.2185, state: 'Andhra Pradesh' },
+        'Patna': { lat: 25.5941, lon: 85.1376, state: 'Bihar' },
+        'Vadodara': { lat: 22.3072, lon: 73.1812, state: 'Gujarat' }
+    };
+
+    // Load saved location on page load
+    function loadSavedLocation() {
+        try {
+            const saved = localStorage.getItem('krishimitra_location');
+            if (saved) {
+                const location = JSON.parse(saved);
+
+                // Check if location is older than 1 hour
+                const savedTime = new Date(location.savedAt);
+                const now = new Date();
+                const hoursDiff = (now - savedTime) / (1000 * 60 * 60);
+
+                if (hoursDiff > 1) {
+                    // Location too old, clear it
+                    localStorage.removeItem('krishimitra_location');
+                    document.getElementById('profileLocation').textContent = 'Not set';
+                    return;
+                }
+
+                // Update profile display
+                const displayText = location.state ?
+                    `${location.city}, ${location.state}` :
+                    location.city || 'Not set';
+                document.getElementById('profileLocation').textContent = displayText;
+
+                // Show in modal if open
+                if (location.city) {
+                    document.getElementById('currentLocationCity').textContent = displayText;
+                    document.getElementById('currentLocationMethod').textContent =
+                        location.method === 'auto' ? 'Auto-detected' : 'Manually set';
+                    document.getElementById('currentLocationDisplay').classList.remove('hidden');
+                }
+            } else {
+                document.getElementById('profileLocation').textContent = 'Not set';
+            }
+        } catch (error) {
+            console.error('Error loading location:', error);
+            document.getElementById('profileLocation').textContent = 'Not set';
+        }
+    }
+
+    // Select location method (auto or manual)
+    function selectLocationMethod(method) {
+        const autoBtn = document.getElementById('autoDetectBtn');
+        const manualBtn = document.getElementById('manualEntryBtn');
+        const autoContent = document.getElementById('autoDetectContent');
+        const manualContent = document.getElementById('manualEntryContent');
+
+        if (method === 'auto') {
+            autoBtn.classList.add('border-green-500', 'bg-green-50');
+            autoBtn.classList.remove('border-slate-200', 'bg-white');
+            manualBtn.classList.remove('border-green-500', 'bg-green-50');
+            manualBtn.classList.add('border-slate-200', 'bg-white');
+
+            autoContent.classList.remove('hidden');
+            manualContent.classList.add('hidden');
+        } else {
+            manualBtn.classList.add('border-green-500', 'bg-green-50');
+            manualBtn.classList.remove('border-slate-200', 'bg-white');
+            autoBtn.classList.remove('border-green-500', 'bg-green-50');
+            autoBtn.classList.add('border-slate-200', 'bg-white');
+
+            manualContent.classList.remove('hidden');
+            autoContent.classList.add('hidden');
+        }
+    }
+
+    // Auto-detect location using GPS
+    async function detectLocation() {
+        const btn = document.getElementById('detectBtn');
+        const messageDiv = document.getElementById('locationMessage');
+
+        btn.textContent = '🔄 Detecting...';
+        btn.disabled = true;
+
+        if (!navigator.geolocation) {
+            showLocationMessage('⚠️ Geolocation is not supported by your browser.', 'error');
+            btn.textContent = '📍 Detect My Location';
+            btn.disabled = false;
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+
+                try {
+                    // Fetch city name from backend
+                    const response = await fetch(`/api/online/weather?lat=${lat}&lon=${lon}`);
+                    const data = await response.json();
+
+                    const locationData = {
+                        latitude: lat,
+                        longitude: lon,
+                        city: data.city || 'Your Location',
+                        state: data.state || '',
+                        method: 'auto',
+                        savedAt: new Date().toISOString()
+                    };
+
+                    localStorage.setItem('krishimitra_location', JSON.stringify(locationData));
+
+                    showLocationMessage('✅ Location detected and saved successfully!', 'success');
+                    loadSavedLocation();
+
+                    setTimeout(() => {
+                        closeModal('locationSettingsModal');
+                        window.location.reload(); // Refresh to update weather
+                    }, 1500);
+                } catch (error) {
+                    console.error('Error fetching city:', error);
+                    showLocationMessage('⚠️ Could not determine city name.', 'error');
+                }
+
+                btn.textContent = '📍 Detect My Location';
+                btn.disabled = false;
+            },
+            (error) => {
+                let message = '⚠️ Unable to get location. ';
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        message += 'Permission denied. Please allow location access.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        message += 'Location information unavailable.';
+                        break;
+                    case error.TIMEOUT:
+                        message += 'Location request timed out.';
+                        break;
+                }
+                showLocationMessage(message, 'error');
+                btn.textContent = '📍 Detect My Location';
+                btn.disabled = false;
+            }
+        );
+    }
+
+    // Save manual location
+    function saveManualLocation() {
+        const cityInput = document.getElementById('manualCity');
+        const stateSelect = document.getElementById('manualState');
+        const btn = document.getElementById('saveLocationBtn');
+
+        const city = cityInput.value.trim();
+        const state = stateSelect.value;
+
+        if (!city) {
+            showLocationMessage('⚠️ Please enter a city name.', 'error');
+            return;
+        }
+
+        // Find city in database
+        const cityKey = Object.keys(cityCoordinates).find(
+            key => key.toLowerCase() === city.toLowerCase()
+        );
+
+        if (!cityKey) {
+            showLocationMessage(`⚠️ City "${city}" not found. Try: Mumbai, Delhi, Bangalore, etc.`, 'error');
+            return;
+        }
+
+        btn.textContent = '💾 Saving...';
+        btn.disabled = true;
+
+        const coords = cityCoordinates[cityKey];
+        const locationData = {
+            latitude: coords.lat,
+            longitude: coords.lon,
+            city: cityKey,
+            state: state || coords.state,
+            method: 'manual',
+            savedAt: new Date().toISOString()
+        };
+
+        localStorage.setItem('krishimitra_location', JSON.stringify(locationData));
+
+        showLocationMessage('✅ Location saved successfully!', 'success');
+        loadSavedLocation();
+
+        setTimeout(() => {
+            closeModal('locationSettingsModal');
+            window.location.reload(); // Refresh to update weather
+        }, 1500);
+
+        btn.textContent = '💾 Save Location';
+        btn.disabled = false;
+    }
+
+    // Clear saved location
+    function clearLocation() {
+        localStorage.removeItem('krishimitra_location');
+        document.getElementById('currentLocationDisplay').classList.add('hidden');
+        document.getElementById('profileLocation').textContent = 'Not set';
+        showLocationMessage('✅ Location cleared.', 'success');
+    }
+
+    // Show message
+    function showLocationMessage(message, type) {
+        const messageDiv = document.getElementById('locationMessage');
+        messageDiv.textContent = message;
+        messageDiv.className = `mt-4 p-4 rounded-xl ${type === 'success' ? 'bg-green-50 text-green-800 border-l-4 border-green-500' :
+                'bg-red-50 text-red-800 border-l-4 border-red-500'
+            }`;
+        messageDiv.classList.remove('hidden');
+
+        setTimeout(() => {
+            messageDiv.classList.add('hidden');
+        }, 5000);
+    }
+
+    // Load location on page load
+    document.addEventListener('DOMContentLoaded', loadSavedLocation);
 </script>
 </body>
 

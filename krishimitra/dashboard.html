@@ -156,7 +156,7 @@
                     <p class="text-[10px] text-blue-200 uppercase font-bold tracking-widest mt-1 italic"
                         id="weatherDesc">Clear Sky</p>
                 </div>
-                <div
+                <div id="weatherForecastGrid"
                     class="grid grid-cols-3 gap-6 border-t md:border-t-0 md:border-l border-white/20 pt-6 md:pt-0 md:pl-8">
                     <div class="text-center">
                         <p class="text-xs text-blue-200 uppercase font-bold tracking-wider mb-2">Tomorrow</p>
@@ -2482,8 +2482,28 @@
             document.getElementById('weatherDesc').textContent = w.text;
             document.getElementById('weatherTips').textContent = w.tip;
 
-            // Optional: Update Forecast (Mocking UI structure mapping)
-            // You can enhance this to loop through 'daily' array and update the 3 small forecast cards
+            // Update Forecast (Next 3 Days)
+            const forecastGrid = document.getElementById('weatherForecastGrid');
+            if (forecastGrid && daily) {
+                let forecastHTML = '';
+                // We skip index 0 (Today) and show 1, 2, 3 (Tomorrow, etc.)
+                for (let i = 1; i <= 3; i++) {
+                    const date = new Date(daily.time[i]);
+                    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' }); // Mon, Tue
+                    const maxTemp = Math.round(daily.temperature_2m_max[i]);
+                    const weatherCode = daily.weather_code[i];
+                    const wmo = getWMO(weatherCode);
+
+                    forecastHTML += `
+                        <div class="text-center">
+                            <p class="text-[10px] md:text-xs text-blue-200 uppercase font-bold tracking-wider mb-1 md:mb-2">${i === 1 ? 'Tomorrow' : dayName}</p>
+                            <p class="text-lg md:text-xl font-bold">${maxTemp}°C</p>
+                            <p class="text-lg">${wmo.icon}</p>
+                        </div>
+                    `;
+                }
+                forecastGrid.innerHTML = forecastHTML;
+            }
 
         } catch (error) {
             console.error("Weather Update Failed:", error);
@@ -2495,10 +2515,6 @@
         loadSavedLocation();
         updateWeatherUI();
     });
-</script>
-</body>
-
-</html>
 </script>
 </body>
 

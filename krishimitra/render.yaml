@@ -1,3 +1,4 @@
+# Updated Render Blueprint for KrishiMitra
 services:
   # 1. Backend API (Node.js)
   - type: web

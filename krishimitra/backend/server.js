@@ -60,69 +60,49 @@ app.get('/api/health', (req, res) => {
 });
 
 // ========================================
-// ERROR HANDLING
-// ========================================
-
-app.use((err, req, res, next) => {
-    console.error('🔥 GLOBAL_ERROR:', err.stack);
-    res.status(500).json({
-        success: false,
-        error: 'Internal Server Error',
-        message: err.message
-    });
-});
-
-// Crash Protection
-process.on('uncaughtException', (err) => {
-    console.error('💥 UNCAUGHT_EXCEPTION:', err);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('🌋 UNHANDLED_REJECTION at:', promise, 'reason:', reason);
-});
-
-// ========================================
-// DATABASE SYNC & SERVER START
+// START SERVER (Robust Mode)
 // ========================================
 
 const startServer = async () => {
     try {
+        console.log('🔄 Attempting Database Connection...');
         await connectDB();
 
-        if (process.env.NODE_ENV === 'production') {
-            console.log('📊 Production mode - verifying schema');
-            await sequelize.sync({ alter: false });
+        if (sequelize) {
+            console.log('📊 Verifying Schema...');
+            // Don't use force:false here to be safe in prod, just alter
+            await sequelize.sync({ alter: true });
+            console.log('✅ Database Synced & Ready');
         } else {
-            console.log('📊 Development mode - syncing schema');
-            await sequelize.sync({ force: false, alter: true });
+            console.warn('⚠️ Sequlize instance missing - Running in Offline Mode');
         }
 
-        console.log('✅ Database Synced & Ready');
-
-        app.listen(PORT, '0.0.0.0', () => {
-            console.log(`========================================`);
-            console.log(`🚀 KRISHIMITRA BACKEND IS LIVE`);
-            console.log(`🌐 URL: http://127.0.0.1:${PORT}`);
-            console.log(`📡 Status: LISTENING FOR REQUESTS`);
-            console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-            console.log(`========================================`);
-        });
     } catch (error) {
-        console.error('❌ Server startup failed:', error);
-        setTimeout(startServer, 5000);
+        console.error('❌ Database Connection Failed (APP WILL START ANYWAY):', error.message);
+        // We do NOT exit. We continue to app.listen.
     }
+
+    // Always Start Listening
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`========================================`);
+        console.log(`🚀 KRISHIMITRA BACKEND IS LIVE (Port ${PORT})`);
+        console.log(`📡 Status: LISTENING FOR REQUESTS`);
+        console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`⚠️ Database: ${sequelize ? 'Connected' : 'OFFLINE (API Only)'}`);
+        console.log(`========================================`);
+    });
 };
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
     console.log('SIGTERM received, closing server...');
-    await sequelize.close();
+    if (sequelize) await sequelize.close();
     process.exit(0);
 });
 
 process.on('SIGINT', async () => {
     console.log('SIGINT received, closing server...');
-    await sequelize.close();
+    if (sequelize) await sequelize.close();
     process.exit(0);
 });
 

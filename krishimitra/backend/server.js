@@ -16,8 +16,10 @@ const PORT = process.env.PORT || 5000;
 // ========================================
 
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:5500', 'https://krishimitra-frontend.vercel.app', 'https://krishimitra-frontend-giiqrk3ti-kanishkars-projects-78b63bcc.vercel.app'],
-    credentials: true
+    origin: '*', // Allow all origins for production to avoid CORS error
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json({ limit: '50mb' }));

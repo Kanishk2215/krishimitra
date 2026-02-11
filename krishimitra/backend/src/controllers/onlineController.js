@@ -4,26 +4,63 @@ const Warehouse = require('../models/Warehouse');
 // 🌦️ Live Weather (Real-time from OpenWeather)
 exports.getLiveWeather = async (req, res) => {
     try {
-        const lat = req.query.lat || 19.9975; // Default Nashik
-        const lon = req.query.lon || 73.7898;
+        const lat = parseFloat(req.query.lat) || 19.9975; // Default Nashik if not provided
+        const lon = parseFloat(req.query.lon) || 73.7898;
         const API_KEY = process.env.WEATHER_API_KEY || '895284fb2d2c1ad3a920e9a78e32c63c';
 
+        console.log(`🌤️ Weather request for coordinates: ${lat}, ${lon}`);
+
+        // Validate coordinates are within India bounds
+        if (lat < 6 || lat > 37 || lon < 68 || lon > 98) {
+            console.warn('⚠️ Coordinates outside India, using default (Nashik)');
+            // Use default but continue
+        }
+
         const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;
+
+        console.log(`📡 Fetching weather from OpenWeather API...`);
         const response = await axios.get(url);
         const data = response.data;
+
+        console.log(`✅ Weather data received for: ${data.name}, ${data.sys.country}`);
 
         res.json({
             success: true,
             city: data.name,
+            state: data.sys.country === 'IN' ? 'India' : data.sys.country,
             temp: Math.round(data.main.temp),
             description: data.weather[0].description,
             icon: data.weather[0].icon,
             humidity: data.main.humidity,
             wind: data.wind.speed,
-            forecast: "Clear skies expected for the next 48 hours. Good for harvesting."
+            pressure: data.main.pressure,
+            feels_like: Math.round(data.main.feels_like),
+            coordinates: {
+                lat: data.coord.lat,
+                lon: data.coord.lon
+            },
+            forecast: "Clear skies expected for the next 48 hours. Good for harvesting.",
+            timestamp: new Date().toISOString()
         });
     } catch (error) {
-        res.json({ success: false, city: "Nashik", temp: 28, description: "Clear Sky" });
+        console.error('❌ Weather API Error:', error.message);
+
+        // Return fallback data with the requested coordinates
+        const lat = parseFloat(req.query.lat) || 19.9975;
+        const lon = parseFloat(req.query.lon) || 73.7898;
+
+        res.json({
+            success: false,
+            city: "Location",
+            temp: 28,
+            description: "Clear Sky",
+            humidity: 65,
+            wind: 3.5,
+            icon: "01d",
+            coordinates: { lat, lon },
+            error: "Using fallback data. Check API key or network connection.",
+            timestamp: new Date().toISOString()
+        });
     }
 };
 

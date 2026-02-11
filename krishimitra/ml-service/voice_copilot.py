@@ -2,16 +2,30 @@ import os
 import io
 from openai import OpenAI
 from anthropic import Anthropic
-from elevenlabs.client import ElevenLabs
+
+# Try to import ElevenLabs, but don't fail if not available
+try:
+    from elevenlabs import ElevenLabs
+    ELEVENLABS_AVAILABLE = True
+except ImportError:
+    try:
+        # Try older import style
+        from elevenlabs.client import ElevenLabs
+        ELEVENLABS_AVAILABLE = True
+    except ImportError:
+        print("⚠️ ElevenLabs not available. Voice output will be disabled.")
+        ELEVENLABS_AVAILABLE = False
+        ElevenLabs = None
+
 from dotenv import load_dotenv
 
 load_dotenv()
 
 # Initialize Clients
 # Note: User must provide these in Render Environment Variables
-openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-eleven_client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
+openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY")) if os.getenv("OPENAI_API_KEY") else None
+anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY")) if os.getenv("ANTHROPIC_API_KEY") else None
+eleven_client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY")) if (ELEVENLABS_AVAILABLE and os.getenv("ELEVENLABS_API_KEY")) else None
 
 class VoiceCopilot:
     def __init__(self):
@@ -64,6 +78,10 @@ class VoiceCopilot:
 
     def text_to_speech(self, text):
         """Convert text to Tamil voice using ElevenLabs."""
+        if not ELEVENLABS_AVAILABLE or not eleven_client:
+            print("⚠️ ElevenLabs not available. Returning None for audio.")
+            return None
+            
         try:
             # Using a friendly female voice for AI (e.g., 'Rachel' or custom Tamil voice)
             audio_gen = eleven_client.generate(

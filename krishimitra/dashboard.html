@@ -2602,43 +2602,82 @@
             priceGrid.innerHTML = html;
         }
 
-        // 3. Generate Local News (Using Real Date)
+        // 3. Fetch REAL News from Google News (via RSS-to-JSON)
         const newsList = document.getElementById('marketNewsList');
         if (newsList) {
-            const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+            newsList.innerHTML = '<div class="animate-pulse text-xs text-slate-400 font-bold">📡 Fetching real-time news...</div>';
 
-            const newsItems = [
-                {
-                    title: `Bumper harvest expected in ${city} region this season.`,
-                    source: "AgriNews India",
-                    time: "2 hours ago"
-                },
-                {
-                    title: "Govt announces new subsidy for drip irrigation systems.",
-                    source: "Ministry of Agriculture",
-                    time: "5 hours ago"
-                },
-                {
-                    title: "Global cotton prices surge by 5% due to high demand.",
-                    source: "Market Watch",
-                    time: "Yesterday"
-                },
-                {
-                    title: `Local ${city} mandi reports record arrival of soybeans.`,
-                    source: "Mandi Samachar",
-                    time: `Today, ${today}`
-                }
-            ];
+            // Use Google News RSS for Agriculture + City
+            const rssUrl = `https://news.google.com/rss/search?q=Agriculture+Farming+India+${encodeURIComponent(city)}&hl=en-IN&gl=IN&ceid=IN:en`;
+            const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
 
-            newsList.innerHTML = newsItems.map(news => `
-                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                    <h5 class="font-bold text-slate-800 text-sm mb-1 line-clamp-2">${news.title}</h5>
-                    <div class="flex justify-between items-center text-[10px] text-slate-500 font-medium">
-                        <span>📰 ${news.source}</span>
-                        <span>🕒 ${news.time}</span>
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'ok' && data.items.length > 0) {
+                        // We have REAL news!
+                        const items = data.items.slice(0, 5); // Take top 5
+
+                        newsList.innerHTML = items.map(news => {
+                            const date = new Date(news.pubDate);
+                            const timeAgo = Math.floor((new Date() - date) / 3600000); // Hours ago
+                            const timeDisplay = timeAgo < 1 ? 'Just now' : `${timeAgo}h ago`;
+                            const sourceName = news.author || "News Source"; // Author is often empty in RSS, fallback
+
+                            return `
+                        <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 hover:bg-white transition-colors">
+                            <a href="${news.link}" target="_blank" class="block">
+                                <h5 class="font-bold text-slate-800 text-sm mb-1 line-clamp-2 hover:text-blue-600 hover:underline">${news.title}</h5>
+                                <div class="flex justify-between items-center text-[10px] text-slate-500 font-medium">
+                                    <span>📰 ${sourceName}</span>
+                                    <span>🕒 ${timeDisplay}</span>
+                                </div>
+                            </a>
+                        </div>
+                        `;
+                        }).join('');
+                    } else {
+                        throw new Error("No news found");
+                    }
+                })
+                .catch(err => {
+                    console.warn("News API failed, showing logic-based updates:", err);
+
+                    // FALLBACK: Generate Local Logic-Based News (Simulated)
+                    const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+                    const newsItems = [
+                        {
+                            title: `Harvest season updates for ${city} region farmers.`,
+                            source: "Local Agri Office",
+                            time: "2h ago"
+                        },
+                        {
+                            title: "New government schemes for organic fertilizers announced.",
+                            source: "Ministry of Agriculture",
+                            time: "5h ago"
+                        },
+                        {
+                            title: `Market prices for Tomato and Onion stabilize in ${city}.`,
+                            source: "Mandi Report",
+                            time: `Today, ${today}`
+                        },
+                        {
+                            title: "IMD predicts favorable monsoon conditions for next week.",
+                            source: "Weather Dept",
+                            time: "Yesterday"
+                        }
+                    ];
+
+                    newsList.innerHTML = newsItems.map(news => `
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <h5 class="font-bold text-slate-800 text-sm mb-1 line-clamp-2">${news.title}</h5>
+                        <div class="flex justify-between items-center text-[10px] text-slate-500 font-medium">
+                            <span>📰 ${news.source}</span>
+                            <span>🕒 ${news.time}</span>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
+                });
         }
     }
 

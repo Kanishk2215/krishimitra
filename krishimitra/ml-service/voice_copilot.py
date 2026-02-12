@@ -1,5 +1,6 @@
 import os
 import io
+import google.generativeai as genai
 from openai import OpenAI
 from anthropic import Anthropic
 
@@ -9,7 +10,6 @@ try:
     ELEVENLABS_AVAILABLE = True
 except ImportError:
     try:
-        # Try older import style
         from elevenlabs.client import ElevenLabs
         ELEVENLABS_AVAILABLE = True
     except ImportError:
@@ -22,10 +22,16 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Initialize Clients
-# Note: User must provide these in Render Environment Variables
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY")) if os.getenv("OPENAI_API_KEY") else None
 anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY")) if os.getenv("ANTHROPIC_API_KEY") else None
 eleven_client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY")) if (ELEVENLABS_AVAILABLE and os.getenv("ELEVENLABS_API_KEY")) else None
+
+# Initialize Gemini
+if os.getenv("GOOGLE_API_KEY"):
+    genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+    gemini_model = genai.GenerativeModel('gemini-pro')
+else:
+    gemini_model = None
 
 class VoiceCopilot:
     def __init__(self):
@@ -42,14 +48,19 @@ class VoiceCopilot:
         """
 
     def get_text_response(self, user_text, language="English"):
-        """Get intelligent response from Claude/OpenAI for text chat."""
+        """Get intelligent response from Gemini/Claude/OpenAI."""
         try:
             # Format prompt with language
             lang_name = self._get_language_name(language)
             system_prompt = self.base_system_prompt.format(language=lang_name)
             
-            # Use Anthropic if available, else OpenAI, else Mock
-            if anthropic_client:
+            # Prioritize: Gemini (Free/Fast) -> Claude -> OpenAI -> Fallback
+            if gemini_model:
+                full_prompt = f"{system_prompt}\n\nUser Question: {user_text}"
+                response = gemini_model.generate_content(full_prompt)
+                return response.text
+            
+            elif anthropic_client:
                 message = anthropic_client.messages.create(
                     model="claude-3-sonnet-20240229",
                     max_tokens=1024,
@@ -73,8 +84,7 @@ class VoiceCopilot:
                 return response.choices[0].message.content
                 
             else:
-                # Fallback if no keys
-                return f"({lang_name}) API Keys missing. I can only speak English for now: I received '{user_text}'."
+                return f"({lang_name}) API Keys missing (Google/OpenAI/Anthropic). Please add one to .env to enable AI."
 
         except Exception as e:
             print(f"AI Error: {e}")
@@ -89,10 +99,9 @@ class VoiceCopilot:
         return mapping.get(code, code)
 
     def speech_to_text(self, audio_bytes):
-        """Convert multi-language audio to text using Whisper with auto-detection."""
-        # ... (rest of the file as is, just need to keep what was there or overwrite if easier)
-        # Since I am replacing from class definition, I will re-include the methods
+        """Convert multi-language audio to text using Whisper or Google STT (future)."""
         if not openai_client:
+            # TODO: Add Google STT fallback here if needed
             return None
             
         try:
@@ -111,38 +120,26 @@ class VoiceCopilot:
     def text_to_speech(self, text):
         """Convert text to Tamil voice using ElevenLabs."""
         if not ELEVENLABS_AVAILABLE or not eleven_client:
-            print("⚠️ ElevenLabs not available. Returning None for audio.")
             return None
             
         try:
-            # Using a friendly female voice for AI (e.g., 'Rachel' or custom Tamil voice)
             audio_gen = eleven_client.generate(
                 text=text,
                 voice="Rachel", 
                 model="eleven_multilingual_v2"
             )
-            
-            # Combine chunks into bytes
-            audio_bytes = b"".join(list(audio_gen))
-            return audio_bytes
+            return b"".join(list(audio_gen))
         except Exception as e:
             print(f"TTS Error: {e}")
             return None
 
     def process_voice_query(self, audio_bytes):
         """Full pipeline: Voice -> Text -> AI Response -> Voice."""
-        # 1. Voice to Text
         user_text = self.speech_to_text(audio_bytes)
         if not user_text:
             return {"error": "Could not understand audio", "user_text": "", "ai_text": ""}
 
-        # 2. AI Logic (Auto-detect language from text usually, but for voice we can default to English logic 
-        # unless prompt handling is added. But here we just call get_text_response with auto/English for now)
-        # Ideally we detect language from text.
-        
         ai_text = self.get_text_response(user_text, language="User's Language")
-
-        # 3. Text to Voice
         ai_audio = self.text_to_speech(ai_text)
 
         return {

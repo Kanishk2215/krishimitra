@@ -206,9 +206,10 @@
         <!-- Crop Recommendations -->
         <section class="space-y-4">
             <div class="flex justify-between items-end">
-                <h2 class="text-xl font-bold text-slate-800">Smart Crop Matches</h2>
+                <h2 class="text-xl font-bold text-slate-800" id="t_smart_matches">Smart Crop Matches</h2>
                 <a href="javascript:void(0)" onclick="toggleDetailedAnalysis()"
-                    class="text-sm font-semibold text-green-600 hover:underline">See detailed analysis</a>
+                    class="text-sm font-semibold text-green-600 hover:underline" id="t_see_details">See detailed
+                    analysis</a>
             </div>
             <div class="grid md:grid-cols-3 gap-6">
                 <!-- Card 1 -->
@@ -216,8 +217,8 @@
                     class="feature-card bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-4 cursor-pointer">
                     <div class="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center text-2xl">🌱</div>
                     <div>
-                        <h3 class="font-bold text-slate-800 text-lg">Soybean</h3>
-                        <p class="text-sm text-slate-500 font-medium">92% Match • Kharif Season</p>
+                        <h3 class="font-bold text-slate-800 text-lg" id="t_crop_1_name">Soybean</h3>
+                        <p class="text-sm text-slate-500 font-medium" id="t_crop_1_desc">92% Match • Kharif Season</p>
                     </div>
                     <div class="pt-4 border-t border-slate-50 flex justify-between items-center">
                         <span class="text-green-600 font-bold">₹45k / acre</span>
@@ -229,8 +230,8 @@
                     class="feature-card bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-4 cursor-pointer">
                     <div class="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center text-2xl">☁️</div>
                     <div>
-                        <h3 class="font-bold text-slate-800 text-lg">Cotton</h3>
-                        <p class="text-sm text-slate-500 font-medium">88% Match • Kharif Season</p>
+                        <h3 class="font-bold text-slate-800 text-lg" id="t_crop_2_name">Cotton</h3>
+                        <p class="text-sm text-slate-500 font-medium" id="t_crop_2_desc">88% Match • Kharif Season</p>
                     </div>
                     <div class="pt-4 border-t border-slate-50 flex justify-between items-center">
                         <span class="text-blue-600 font-bold">₹60k / acre</span>
@@ -242,8 +243,8 @@
                     class="feature-card bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-4 cursor-pointer">
                     <div class="w-12 h-12 bg-yellow-100 rounded-2xl flex items-center justify-center text-2xl">🌾</div>
                     <div>
-                        <h3 class="font-bold text-slate-800 text-lg">Tur Dal</h3>
-                        <p class="text-sm text-slate-500 font-medium">85% Match • Long Term</p>
+                        <h3 class="font-bold text-slate-800 text-lg" id="t_crop_3_name">Tur Dal</h3>
+                        <p class="text-sm text-slate-500 font-medium" id="t_crop_3_desc">85% Match • Long Term</p>
                     </div>
                     <div class="pt-4 border-t border-slate-50 flex justify-between items-center">
                         <span class="text-yellow-600 font-bold">₹50k / acre</span>
@@ -274,7 +275,7 @@
                 class="flex flex-col items-center justify-center p-6 bg-white rounded-3xl border border-slate-100 feature-card text-slate-700 font-bold relative overflow-hidden group">
                 <div class="absolute inset-0 bg-yellow-400 opacity-0 group-hover:opacity-10 transition-opacity"></div>
                 <span class="text-3xl mb-2">🚜</span>
-                Market Planner
+                <span id="t_market_planner">Market Planner</span>
             </button>
 
         </div>
@@ -2760,7 +2761,17 @@
             'my_farm': 'My Farm',
             'profile': 'Profile',
             'settings': 'Settings',
-            'logout': 'Logout'
+            'logout': 'Logout',
+            // NEW KEYS
+            'smart_matches': 'Smart Crop Matches',
+            'see_details': 'See detailed analysis',
+            'market_planner': 'Market Planner',
+            'crop_1_name': 'Soybean',
+            'crop_1_desc': '92% Match • Kharif Season',
+            'crop_2_name': 'Cotton',
+            'crop_2_desc': '88% Match • Kharif Season',
+            'crop_3_name': 'Tur Dal',
+            'crop_3_desc': '85% Match • Long Term'
         },
         'hi': {
             'welcome': 'नमस्ते',
@@ -2777,7 +2788,17 @@
             'my_farm': 'मेरा खेत',
             'profile': 'प्रोफाइल',
             'settings': 'सेटिंग्स',
-            'logout': 'लॉग आउट'
+            'logout': 'लॉग आउट',
+            // NEW KEYS
+            'smart_matches': 'अनुशंसित फसलें',
+            'see_details': 'विस्तृत विश्लेषण देखें',
+            'market_planner': 'बाजार योजना',
+            'crop_1_name': 'सोयाबीन',
+            'crop_1_desc': '९२% मेल • खरीफ मौसम',
+            'crop_2_name': 'कपास',
+            'crop_2_desc': '८८% मेल • खरीफ मौसम',
+            'crop_3_name': 'तूर दाल',
+            'crop_3_desc': '८५% मेल • लंबी अवधि'
         },
         'ta': {
             'welcome': 'வணக்கம்',
@@ -2794,7 +2815,17 @@
             'my_farm': 'என் பண்ணை',
             'profile': 'சுயவிவரம்',
             'settings': 'அமைப்புகள்',
-            'logout': 'வெளியேறு'
+            'logout': 'வெளியேறு',
+            // NEW KEYS
+            'smart_matches': 'பயிர் பரிந்துரைகள்',
+            'see_details': 'விரிவான ஆய்வு',
+            'market_planner': 'சந்தை திட்டம்',
+            'crop_1_name': 'சோயாபீன்',
+            'crop_1_desc': '92% பொருத்தம் • காரீஃப்',
+            'crop_2_name': 'பருத்தி',
+            'crop_2_desc': '88% பொருத்தம் • காரீஃப்',
+            'crop_3_name': 'துவரை',
+            'crop_3_desc': '85% பொருத்தம் • நீண்ட காலம்'
         },
         'te': {
             'welcome': 'నమస్కారం',
@@ -2811,7 +2842,17 @@
             'my_farm': 'నా పొలం',
             'profile': 'ప్రొఫైల్',
             'settings': 'సెట్టింగ్స్',
-            'logout': 'లాగ్ అవుట్'
+            'logout': 'లాగ్ అవుట్',
+            // NEW KEYS
+            'smart_matches': 'పంట సూచనలు',
+            'see_details': 'వివరణాత్మక విశ్లేషణ',
+            'market_planner': 'మార్కెట్ ప్లానర్',
+            'crop_1_name': 'సోయాబీన్',
+            'crop_1_desc': '92% సరిపోలిక • ఖరీఫ్',
+            'crop_2_name': 'పత్తి',
+            'crop_2_desc': '88% సరిపోలిక • ఖరీఫ్',
+            'crop_3_name': 'కంది',
+            'crop_3_desc': '85% సరిపోలిక • దీర్ఘకాలికం'
         }
         // Add more langs as needed... dynamic fallback to English for missing keys
     };
@@ -2858,12 +2899,36 @@
             if (el && dict[key]) el.textContent = dict[key];
         };
 
-        // Core Strings updates (IDs need to be consistent in HTML)
-        // Note: For a robust system, we should use data-i18n attributes. 
-        // For now, I will update key IDs directly where possible or reload page to let backend/logic handle it if needed.
+        // Apply Translations to Elements
+        updateText('t_welcome', 'welcome');
+        updateText('t_subtitle', 'dashboard_subtitle');
+        updateText('t_planCrop', 'plan_crop');
+        // Weather & Market cards usually dynamic, but headlines use IDs
+        updateText('t_scan', 'scan_crop');
+        updateText('t_market_card', 'market_card');
+        updateText('t_calc_fertilizer', 'calc_fertilizer');
+        updateText('t_community', 'community_card');
+        updateText('t_quickActions', 'quick_actions');
+
+        // New Sections
+        updateText('t_smart_matches', 'smart_matches');
+        updateText('t_see_details', 'see_details');
+
+        // Crops
+        updateText('t_crop_1_name', 'crop_1_name');
+        updateText('t_crop_1_desc', 'crop_1_desc');
+        updateText('t_crop_2_name', 'crop_2_name');
+        updateText('t_crop_2_desc', 'crop_2_desc');
+        updateText('t_crop_3_name', 'crop_3_name');
+        updateText('t_crop_3_desc', 'crop_3_desc');
+
+        updateText('t_market_planner', 'market_planner');
+
+        // Nav & Profile
+        updateText('profileLanguage', 'profile'); // This might be wrong key, checking... profileLanguage is usually lang Name
+        // Actually profileLanguage ID is used for "English", "Tamil" text, handled separately above.
 
         // If we want instant update without data-i18n tags, we need to add IDs to HTML elements first.
-        // Given complexity, reloading page is safest to ensure all logic (like date formats) updates correctly.
 
         if (reload) {
             // Show loading

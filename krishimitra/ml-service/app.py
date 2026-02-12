@@ -308,7 +308,10 @@ def health():
 
 
 from chatbot import ChatAssistant
+from voice_copilot import VoiceCopilot
+
 chat_assistant = ChatAssistant()
+voice_copilot = VoiceCopilot()
 
 @app.route('/chat/send', methods=['POST'])
 def chat_send():
@@ -316,8 +319,19 @@ def chat_send():
         data = request.json or {}
         text = data.get('text', '')
         user_id = data.get('user_id', 'guest')
+        language = data.get('language', 'en') # Get language context
         
-        result = chat_assistant.process_query(text, user_id)
+        # Use VoiceCopilot's AI Logic (LLM) for smarter multilingual response
+        # It handles translation via System Prompt
+        ai_reply = voice_copilot.get_text_response(text, language)
+        
+        # Format like ChatAssistant result for compatibility
+        result = {
+            "response": ai_reply,
+            "action": None, # Could parse action from AI text if needed
+            "timestamp": "now"
+        }
+        
         return jsonify({"success": True, "data": result})
     except Exception as e:
         print(f"Chat Error: {e}")
@@ -346,9 +360,6 @@ def recommend_fertilizer():
         print(f"Fertilizer Recommendation Error: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
-from voice_copilot import VoiceCopilot
-voice_copilot = VoiceCopilot()
-
 @app.route('/voice/chat', methods=['POST'])
 def voice_chat():
     try:
@@ -365,7 +376,9 @@ def voice_chat():
 
         # Convert audio bytes to base64 to send to frontend
         import base64
-        audio_b64 = base64.b64encode(result["ai_audio"]).decode('utf-8')
+        audio_b64 = None
+        if result.get("ai_audio"):
+             audio_b64 = base64.b64encode(result["ai_audio"]).decode('utf-8')
 
         return jsonify({
             "success": True,

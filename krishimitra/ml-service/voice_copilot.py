@@ -29,11 +29,11 @@ eleven_client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY")) if (ELEVENLA
 
 class VoiceCopilot:
     def __init__(self):
-        self.system_prompt = """
+        self.base_system_prompt = """
         You are 'Krishimitra AI', a helpful farming assistant for Indian farmers.
         
         Rules:
-        1. Always respond in the SAME LANGUAGE the user speaks in (Hindi, Tamil, Telugu, Marathi, etc.).
+        1. You MUST respond in the target language: {language}.
         2. Speak in simple, colloquial terms that a farmer can understand.
         3. Keep responses concise and practical.
         4. Provide advice on crops, fertilizers, pest control, and weather.
@@ -41,8 +41,60 @@ class VoiceCopilot:
         6. If you provide a chemical recommendation, always mention a natural/organic alternative too.
         """
 
+    def get_text_response(self, user_text, language="English"):
+        """Get intelligent response from Claude/OpenAI for text chat."""
+        try:
+            # Format prompt with language
+            lang_name = self._get_language_name(language)
+            system_prompt = self.base_system_prompt.format(language=lang_name)
+            
+            # Use Anthropic if available, else OpenAI, else Mock
+            if anthropic_client:
+                message = anthropic_client.messages.create(
+                    model="claude-3-sonnet-20240229",
+                    max_tokens=1024,
+                    system=system_prompt,
+                    messages=[
+                        {"role": "user", "content": user_text}
+                    ]
+                )
+                if hasattr(message.content[0], 'text'):
+                    return message.content[0].text
+                return str(message.content[0])
+            
+            elif openai_client:
+                response = openai_client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_text}
+                    ]
+                )
+                return response.choices[0].message.content
+                
+            else:
+                # Fallback if no keys
+                return f"({lang_name}) API Keys missing. I can only speak English for now: I received '{user_text}'."
+
+        except Exception as e:
+            print(f"AI Error: {e}")
+            return "Sorry, I am facing technical issues. Please try again."
+
+    def _get_language_name(self, code):
+        mapping = {
+            'en': 'English', 'hi': 'Hindi', 'ta': 'Tamil', 'te': 'Telugu',
+            'mr': 'Marathi', 'kn': 'Kannada', 'ml': 'Malayalam',
+            'gu': 'Gujarati', 'bn': 'Bengali', 'pa': 'Punjabi'
+        }
+        return mapping.get(code, code)
+
     def speech_to_text(self, audio_bytes):
         """Convert multi-language audio to text using Whisper with auto-detection."""
+        # ... (rest of the file as is, just need to keep what was there or overwrite if easier)
+        # Since I am replacing from class definition, I will re-include the methods
+        if not openai_client:
+            return None
+            
         try:
             audio_file = io.BytesIO(audio_bytes)
             audio_file.name = "recording.webm" 
@@ -50,31 +102,11 @@ class VoiceCopilot:
             transcript = openai_client.audio.transcriptions.create(
                 model="whisper-1", 
                 file=audio_file
-                # No language hint = auto-detect
             )
             return transcript.text
         except Exception as e:
             print(f"STT Error: {e}")
             return None
-
-    def get_claude_response(self, user_text):
-        """Get intelligent Tamil response from Claude."""
-        try:
-            message = anthropic_client.messages.create(
-                model="claude-3-sonnet-20240229",
-                max_tokens=1024,
-                system=self.system_prompt,
-                messages=[
-                    {"role": "user", "content": user_text}
-                ]
-            )
-            # Handle the response content based on the SDK version
-            if hasattr(message.content[0], 'text'):
-                return message.content[0].text
-            return str(message.content[0])
-        except Exception as e:
-            print(f"Claude Error: {e}")
-            return "மன்னிக்கவும், என்னால் இப்போது பதிலளிக்க முடியவில்லை." # Tamil: Sorry, I can't respond now.
 
     def text_to_speech(self, text):
         """Convert text to Tamil voice using ElevenLabs."""
@@ -86,7 +118,7 @@ class VoiceCopilot:
             # Using a friendly female voice for AI (e.g., 'Rachel' or custom Tamil voice)
             audio_gen = eleven_client.generate(
                 text=text,
-                voice="Rachel", # User can change this to a specific Tamil-tuned voice ID
+                voice="Rachel", 
                 model="eleven_multilingual_v2"
             )
             
@@ -99,19 +131,22 @@ class VoiceCopilot:
 
     def process_voice_query(self, audio_bytes):
         """Full pipeline: Voice -> Text -> AI Response -> Voice."""
-        # 1. Voice to Text (Tamil)
+        # 1. Voice to Text
         user_text = self.speech_to_text(audio_bytes)
         if not user_text:
-            return {"error": "Could not understand audio"}
+            return {"error": "Could not understand audio", "user_text": "", "ai_text": ""}
 
-        # 2. AI Logic (Tamil)
-        ai_text = self.get_claude_response(user_text)
+        # 2. AI Logic (Auto-detect language from text usually, but for voice we can default to English logic 
+        # unless prompt handling is added. But here we just call get_text_response with auto/English for now)
+        # Ideally we detect language from text.
+        
+        ai_text = self.get_text_response(user_text, language="User's Language")
 
-        # 3. Text to Voice (Tamil)
+        # 3. Text to Voice
         ai_audio = self.text_to_speech(ai_text)
 
         return {
             "user_text": user_text,
             "ai_text": ai_text,
-            "ai_audio": ai_audio # This will be sent as base64 or stored
+            "ai_audio": ai_audio 
         }

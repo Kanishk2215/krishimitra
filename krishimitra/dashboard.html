@@ -2125,13 +2125,18 @@
         }, 1500);
     }
 
-    // --- 🎙️ VOICE COPILOT (TAMIL) - WHISPER + CLAUDE + ELEVENLABS ---
+    // --- 🎙️ VOICE COPILOT (MULTILINGUAL) ---
     let mediaRecorder;
     let audioChunks = [];
     let isRecording = false;
 
     async function toggleVoiceCopilot() {
-        const btn = document.querySelector('button[onclick="startListening()"]'); // Find the current mic button
+        // Get current language
+        const langCode = localStorage.getItem('krishimitra_lang') || 'en';
+        const dict = translations[langCode] || translations['en'];
+
+        // Find button - assuming id is 'micBtn' or similar, but using selector as before
+        const btn = document.querySelector('button[onclick="startListening()"]');
         const visualizer = document.getElementById('voiceVisualizer');
 
         if (!isRecording) {
@@ -2146,30 +2151,42 @@
 
                 mediaRecorder.onstop = async () => {
                     const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    sendVoiceToAI(audioBlob);
+                    sendVoiceToAI(audioBlob, langCode);
                 };
 
                 mediaRecorder.start();
                 isRecording = true;
-                visualizer.classList.remove('hidden');
-                btn.classList.add('animate-pulse', 'bg-red-500');
+                if (visualizer) visualizer.classList.remove('hidden');
+                if (btn) btn.classList.add('animate-pulse', 'bg-red-500');
+
+                // Show listening state
+                const listeningMsg = dict['voice_listening'] || "Listening...";
+                addMessage("🎙️ " + listeningMsg, 'user');
+                // TODO: Add 'listening' validation key to dict if needed
+
             } catch (err) {
                 console.error("Mic Access Denied:", err);
-                alert("Please enable microphone access for Voice Copilot.");
+                alert("Please enable microphone access.");
             }
         } else {
             mediaRecorder.stop();
             isRecording = false;
-            visualizer.classList.add('hidden');
-            btn.classList.remove('animate-pulse', 'bg-red-500');
+            if (visualizer) visualizer.classList.add('hidden');
+            if (btn) btn.classList.remove('animate-pulse', 'bg-red-500');
         }
     }
 
-    async function sendVoiceToAI(blob) {
-        addMessage("🎙️ Processing your Tamil query...", 'user');
+    async function sendVoiceToAI(blob, langCode) {
+        // Get current language dict again (async safety)
+        const dict = translations[langCode] || translations['en'];
+        const processingMsg = dict['voice_processing'] || "Processing...";
+        const errorMsg = dict['voice_error'] || "Voice Service Unavailable.";
+
+        addMessage("⏳ " + processingMsg, 'user');
 
         const formData = new FormData();
         formData.append('audio', blob, 'voice.webm');
+        formData.append('language', langCode); // Send Language Code to Backend
 
         try {
             let baseUrl = typeof ML_URL !== 'undefined' ? ML_URL : 'http://127.0.0.1:5001';
@@ -2181,14 +2198,19 @@
             const result = await response.json();
             if (result.success) {
                 addMessage(result.ai_text, 'bot');
-                // Play high-quality ElevenLabs voice
-                playAIVoice(result.audio_b64);
+                // Play high-quality ElevenLabs/Backend voice if available
+                if (result.audio_b64) {
+                    playAIVoice(result.audio_b64);
+                } else {
+                    // Fallback to Browser TTS if no audio returned
+                    speak(result.ai_text);
+                }
             } else {
-                addMessage("⚠️ Sorry, I couldn't understand that. Please try again.", 'bot');
+                addMessage("⚠️ Error: " + (result.error || "Unknown error"), 'bot');
             }
         } catch (err) {
             console.error("Voice Chat Error:", err);
-            addMessage("⚠️ Voice Copilot is currently unavailable.", 'bot');
+            addMessage("⚠️ " + errorMsg, 'bot');
         }
     }
 
@@ -2203,10 +2225,28 @@
     }
 
     function speak(text) {
-        // Fallback for non-voice chat messages
+        // Fallback or Primary Browser TTS
         if (!('speechSynthesis' in window)) return;
+
+        window.speechSynthesis.cancel(); // Stop previous
+
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'ta-IN'; // Set to Tamil
+
+        // Map Lang Code to BCP-47
+        const langCode = localStorage.getItem('krishimitra_lang') || 'en';
+        const langMap = {
+            'en': 'en-IN', // Indian English
+            'hi': 'hi-IN',
+            'ta': 'ta-IN',
+            'te': 'te-IN'
+        };
+        utterance.lang = langMap[langCode] || 'en-US';
+
+        // Try to find a matching voice
+        const voices = window.speechSynthesis.getVoices();
+        const voice = voices.find(v => v.lang.includes(utterance.lang));
+        if (voice) utterance.voice = voice;
+
         window.speechSynthesis.speak(utterance);
     }
 
@@ -2788,7 +2828,11 @@
             'w_thunderstorm': 'Thunderstorm',
             'tip_clear': 'Great day for field work!',
             'tip_rain': 'Pause irrigation.',
-            'tip_storm': 'Stay indoors! Safety first.'
+            'tip_storm': 'Stay indoors! Safety first.',
+            // VOICE ASSISTANT
+            'voice_listening': 'Listening...',
+            'voice_processing': 'Processing...',
+            'voice_error': 'Voice Service Unavailable.'
         },
         'hi': {
             'welcome': 'नमस्ते',
@@ -2837,7 +2881,11 @@
             'w_thunderstorm': 'आंधी तूफान',
             'tip_clear': 'खेत के काम के लिए अच्छा दिन!',
             'tip_rain': 'सिंचाई रोक दें।',
-            'tip_storm': 'घर के अंदर रहें! सुरक्षा पहले।'
+            'tip_storm': 'घर के अंदर रहें! सुरक्षा पहले।',
+            // VOICE ASSISTANT
+            'voice_listening': 'सुन रहा हूँ...',
+            'voice_processing': 'प्रक्रिया जारी है...',
+            'voice_error': 'वॉइस सेवा अनुपलब्ध है।'
         },
         'ta': {
             'welcome': 'வணக்கம்',
@@ -2886,7 +2934,11 @@
             'w_thunderstorm': 'இடியுடன் கூடிய மழை',
             'tip_clear': 'வயல் வேலைக்கு ஏற்ற நாள்!',
             'tip_rain': 'நீர்ப்பாசனத்தை நிறுத்துங்கள்.',
-            'tip_storm': 'பாதுகாப்பாக இருங்கள்!'
+            'tip_storm': 'பாதுகாப்பாக இருங்கள்!',
+            // VOICE ASSISTANT
+            'voice_listening': 'கேட்கிறேன்...',
+            'voice_processing': 'செயலாக்குகிறது...',
+            'voice_error': 'குரல் சேவை கிடைக்கவில்லை.'
         },
         'te': {
             'welcome': 'నమస్కారం',
@@ -2935,7 +2987,11 @@
             'w_thunderstorm': 'ఉరుములతో కూడిన వర్షం',
             'tip_clear': 'పొలం పనులకు మంచి రోజు!',
             'tip_rain': 'నీటి పారుదల ఆపండి.',
-            'tip_storm': 'సురక్షితంగా ఉండండి!'
+            'tip_storm': 'సురక్షితంగా ఉండండి!',
+            // VOICE ASSISTANT
+            'voice_listening': 'వింటున్నాను...',
+            'voice_processing': 'ప్రాసెస్ చేస్తోంది...',
+            'voice_error': 'వాయిస్ సేవ అందుబాటులో లేదు.'
         }
         // Add more langs as needed... dynamic fallback to English for missing keys
     };

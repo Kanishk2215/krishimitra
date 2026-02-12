@@ -2462,13 +2462,17 @@
             const saved = localStorage.getItem('krishimitra_location');
             if (!saved) return; // Keep default if no location
 
+            // Get Current Language
+            const lang = localStorage.getItem('krishimitra_lang') || 'en';
+            const dict = translations[lang] || translations['en'];
+
             const location = JSON.parse(saved);
             const lat = location.latitude;
             const lon = location.longitude;
             const cityName = location.city || location.display_name.split(',')[0];
 
             // Update City Name immediately
-            document.getElementById('weatherCity').textContent = `Live Weather - ${cityName}`;
+            document.getElementById('weatherCity').textContent = `${dict['live_weather']} - ${cityName}`;
 
             // Fetch Live Weather from OpenMeteo (Free, No Key)
             const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto`);
@@ -2479,17 +2483,17 @@
             const current = data.current;
             const daily = data.daily;
 
-            // Map WMO codes to Icons & Desc
+            // Map WMO codes to Icons & Desc (Using Dictionary)
             const weatherMap = {
-                0: { icon: '☀️', text: 'Clear Sky', tip: 'Great day for field work!' },
-                1: { icon: '🌤️', text: 'Mainly Clear', tip: 'Good conditions for sowing.' },
-                2: { icon: '⛅', text: 'Partly Cloudy', tip: 'Watch for afternoon changes.' },
-                3: { icon: '☁️', text: 'Overcast', tip: 'Low sunlight today.' },
-                45: { icon: '🌫️', text: 'Foggy', tip: 'Drive tractor carefully.' },
-                51: { icon: 'zzDRIZZLE', text: 'Light Drizzle', tip: 'Avoid pesticide spraying.' },
-                61: { icon: '🌧️', text: 'Rain', tip: 'Pause irrigation.' },
-                71: { icon: '❄️', text: 'Snow', tip: 'Protect young saplings.' },
-                95: { icon: '⛈️', text: 'Thunderstorm', tip: 'Stay indoors! Safety first.' }
+                0: { icon: '☀️', text: dict['w_clear'], tip: dict['tip_clear'] },
+                1: { icon: '🌤️', text: dict['w_mainly_clear'], tip: dict['tip_clear'] },
+                2: { icon: '⛅', text: dict['w_partly_cloudy'], tip: dict['tip_clear'] },
+                3: { icon: '☁️', text: dict['w_overcast'], tip: dict['tip_clear'] },
+                45: { icon: '🌫️', text: dict['w_foggy'], tip: dict['tip_clear'] },
+                51: { icon: 'zzDRIZZLE', text: dict['w_drizzle'], tip: dict['tip_rain'] },
+                61: { icon: '🌧️', text: dict['w_rain'], tip: dict['tip_rain'] },
+                71: { icon: '❄️', text: dict['w_snow'], tip: dict['tip_storm'] },
+                95: { icon: '⛈️', text: dict['w_thunderstorm'], tip: dict['tip_storm'] }
             };
 
             // Helper to get icon
@@ -2502,7 +2506,7 @@
                 if (code <= 57) return weatherMap[51];
                 if (code <= 67) return weatherMap[61];
                 if (code <= 77) return weatherMap[71];
-                return weatherMap[95];
+                return weatherMap[95] || weatherMap[0];
             };
 
             const w = getWMO(current.weather_code);
@@ -2520,14 +2524,17 @@
                 // We skip index 0 (Today) and show 1, 2, 3 (Tomorrow, etc.)
                 for (let i = 1; i <= 3; i++) {
                     const date = new Date(daily.time[i]);
-                    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' }); // Mon, Tue
+                    // Localize Day Name
+                    const dayName = date.toLocaleDateString(lang, { weekday: 'short' });
+                    const label = i === 1 ? dict['tomorrow'] : dayName;
+
                     const maxTemp = Math.round(daily.temperature_2m_max[i]);
                     const weatherCode = daily.weather_code[i];
                     const wmo = getWMO(weatherCode);
 
                     forecastHTML += `
                         <div class="text-center">
-                            <p class="text-[10px] md:text-xs text-blue-200 uppercase font-bold tracking-wider mb-1 md:mb-2">${i === 1 ? 'Tomorrow' : dayName}</p>
+                            <p class="text-[10px] md:text-xs text-blue-200 uppercase font-bold tracking-wider mb-1 md:mb-2">${label}</p>
                             <p class="text-lg md:text-xl font-bold">${maxTemp}°C</p>
                             <p class="text-lg">${wmo.icon}</p>
                         </div>
@@ -2542,7 +2549,7 @@
                 let modalHTML = '';
                 for (let i = 0; i < daily.time.length; i++) {
                     const date = new Date(daily.time[i]);
-                    const dayName = i === 0 ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'long' });
+                    const dayName = i === 0 ? dict['today'] : date.toLocaleDateString(lang, { weekday: 'long' });
                     const maxTemp = Math.round(daily.temperature_2m_max[i]);
                     const minTemp = Math.round(daily.temperature_2m_min[i]);
                     const weatherCode = daily.weather_code[i];
@@ -2569,14 +2576,6 @@
                             </div>
                         </div>
                      `;
-                }
-
-                // Add Advisory at bottom if rain detected
-                const rainDay = daily.weather_code.findIndex(c => c >= 51); // First rainy day
-                if (rainDay !== -1) {
-                    const date = new Date(daily.time[rainDay]);
-                    const dayName = rainDay === 0 ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'long' });
-                    modalHTML += `<p class="text-xs text-blue-600 font-bold text-center mt-4 bg-blue-50 py-2 rounded-xl border border-blue-100">⚠️ Rain Expected on ${dayName}. Plan accordingly!</p>`;
                 }
                 modalList.innerHTML = modalHTML;
             }
@@ -2772,14 +2771,24 @@
             'crop_1_desc': '92% Match • Kharif Season',
             'crop_2_name': 'Cotton',
             'crop_2_desc': '88% Match • Kharif Season',
-            'crop_3_name': 'Tur Dal',
-            'crop_3_desc': '85% Match • Long Term',
-            // MODALS
-            'disease_title': 'Disease Detection',
-            'take_photo': 'Take Photo',
-            'from_gallery': 'From Gallery',
             'market_news_title': 'Market News',
-            'fert_title': 'Fertilizer Calculator'
+            'fert_title': 'Fertilizer Calculator',
+            // WEATHER
+            'live_weather': 'Live Weather',
+            'tomorrow': 'Tomorrow',
+            'today': 'Today',
+            'w_clear': 'Clear Sky',
+            'w_mainly_clear': 'Mainly Clear',
+            'w_partly_cloudy': 'Partly Cloudy',
+            'w_overcast': 'Overcast',
+            'w_foggy': 'Foggy',
+            'w_drizzle': 'Light Drizzle',
+            'w_rain': 'Rain',
+            'w_snow': 'Snow',
+            'w_thunderstorm': 'Thunderstorm',
+            'tip_clear': 'Great day for field work!',
+            'tip_rain': 'Pause irrigation.',
+            'tip_storm': 'Stay indoors! Safety first.'
         },
         'hi': {
             'welcome': 'नमस्ते',
@@ -2812,7 +2821,23 @@
             'take_photo': 'फोटो लें',
             'from_gallery': 'गैलरी से चुनें',
             'market_news_title': 'बाजार समाचार',
-            'fert_title': 'उर्वरक गणक'
+            'fert_title': 'उर्वरक गणक',
+            // WEATHER
+            'live_weather': 'वर्तमान मौसम',
+            'tomorrow': 'कल',
+            'today': 'आज',
+            'w_clear': 'साफ आसमान',
+            'w_mainly_clear': 'मुख्य रूप से साफ',
+            'w_partly_cloudy': 'आंशिक रूप से बादल',
+            'w_overcast': 'बादल छाए रहेंगे',
+            'w_foggy': 'कोहरा',
+            'w_drizzle': 'हल्की बूंदाबांदी',
+            'w_rain': 'बारिश',
+            'w_snow': 'बर्फबारी',
+            'w_thunderstorm': 'आंधी तूफान',
+            'tip_clear': 'खेत के काम के लिए अच्छा दिन!',
+            'tip_rain': 'सिंचाई रोक दें।',
+            'tip_storm': 'घर के अंदर रहें! सुरक्षा पहले।'
         },
         'ta': {
             'welcome': 'வணக்கம்',
@@ -2845,7 +2870,23 @@
             'take_photo': 'புகைப்படம் எடு',
             'from_gallery': 'கேலரியில் இருந்து',
             'market_news_title': 'சந்தை செய்திகள்',
-            'fert_title': 'உரம் கால்குலேட்டர்'
+            'fert_title': 'உரம் கால்குலேட்டர்',
+            // WEATHER
+            'live_weather': 'தற்போதைய வானிலை',
+            'tomorrow': 'நாளை',
+            'today': 'இன்று',
+            'w_clear': 'தெளிவான வானம்',
+            'w_mainly_clear': 'பெரும்பாலும் தெளிவானது',
+            'w_partly_cloudy': 'பகுதி மேகமூட்டம்',
+            'w_overcast': 'மேகமூட்டம்',
+            'w_foggy': 'மூடுபனி',
+            'w_drizzle': 'லேசான தூறல்',
+            'w_rain': 'மழை',
+            'w_snow': 'பனி',
+            'w_thunderstorm': 'இடியுடன் கூடிய மழை',
+            'tip_clear': 'வயல் வேலைக்கு ஏற்ற நாள்!',
+            'tip_rain': 'நீர்ப்பாசனத்தை நிறுத்துங்கள்.',
+            'tip_storm': 'பாதுகாப்பாக இருங்கள்!'
         },
         'te': {
             'welcome': 'నమస్కారం',
@@ -2878,7 +2919,23 @@
             'take_photo': 'ఫోటో తీయండి',
             'from_gallery': 'గ్యాలరీ నుండి',
             'market_news_title': 'మార్కెట్ వార్తలు',
-            'fert_title': 'ఎరువుల గణన'
+            'fert_title': 'ఎరువుల గణన',
+            // WEATHER
+            'live_weather': 'ప్రస్తుత వాతావరణం',
+            'tomorrow': 'రేపు',
+            'today': 'ఈ రోజు',
+            'w_clear': 'నిర్మలమైన ఆకాశం',
+            'w_mainly_clear': 'ప్రధానంగా నిర్మలం',
+            'w_partly_cloudy': 'పాక్షికంగా మేఘావృతం',
+            'w_overcast': 'మేఘావృతం',
+            'w_foggy': 'పొగమంచు',
+            'w_drizzle': 'తేలికపాటి జల్లు',
+            'w_rain': 'వర్షం',
+            'w_snow': 'మంచు',
+            'w_thunderstorm': 'ఉరుములతో కూడిన వర్షం',
+            'tip_clear': 'పొలం పనులకు మంచి రోజు!',
+            'tip_rain': 'నీటి పారుదల ఆపండి.',
+            'tip_storm': 'సురక్షితంగా ఉండండి!'
         }
         // Add more langs as needed... dynamic fallback to English for missing keys
     };

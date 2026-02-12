@@ -2086,12 +2086,15 @@
             let baseUrl = 'http://127.0.0.1:5001';
             if (typeof ML_URL !== 'undefined') baseUrl = ML_URL;
 
+            const langCode = localStorage.getItem('krishimitra_lang') || 'en';
+
             const response = await fetch(`${baseUrl}/chat/send`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     text: text,
-                    user_id: farmer.phone || 'guest'
+                    user_id: farmer.phone || 'guest',
+                    language: langCode // critical for multilingual response
                 })
             });
 

@@ -596,7 +596,8 @@
         class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
         <div class="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in-95 duration-300 my-8">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-bold text-slate-800">Disease Detection 🏥</h3>
+                <h3 class="text-2xl font-bold text-slate-800"><span id="t_disease_title">Disease Detection</span> 🏥
+                </h3>
                 <button onclick="closeModal('diseaseModal')"
                     class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
             </div>
@@ -607,12 +608,12 @@
                     <button onclick="document.getElementById('cameraInput').click()"
                         class="p-6 bg-green-50 rounded-3xl border-2 border-dashed border-green-200 hover:bg-green-100 transition-all text-center group">
                         <div class="text-3xl mb-2 group-hover:scale-110 transition-transform">📸</div>
-                        <p class="text-xs font-bold text-green-700">Take Photo</p>
+                        <span class="font-bold text-slate-600 text-sm block" id="t_take_photo">Take Photo</span>
                     </button>
                     <button onclick="document.getElementById('galleryInput').click()"
                         class="p-6 bg-blue-50 rounded-3xl border-2 border-dashed border-blue-200 hover:bg-blue-100 transition-all text-center group">
                         <div class="text-3xl mb-2 group-hover:scale-110 transition-transform">🖼️</div>
-                        <p class="text-xs font-bold text-blue-700">From Gallery</p>
+                        <span class="font-bold text-slate-600 text-sm block" id="t_from_gallery">From Gallery</span>
                     </button>
                 </div>
                 <!-- Camera Input (Direct) -->
@@ -923,9 +924,10 @@
             class="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
                 <div>
-                    <h3 class="text-2xl font-bold text-slate-800">Market News</h3>
-                    <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Live Mandi Prices •
-                        Nashik</p>
+                    <h3 class="text-2xl font-bold text-slate-800" id="t_market_news_title">Market News</h3>
+                    <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1" id="mandiHeaderLocation">
+                        LIVE MANDI PRICES •
+                        loading...</p>
                 </div>
                 <button onclick="closeModal('marketModal')"
                     class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
@@ -1487,9 +1489,9 @@
     <!-- Fertilizer Modal -->
     <div id="fertilizerModal"
         class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-        <div class="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in-95 duration-300 my-8">
+        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in-95 duration-300 my-8">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-bold text-slate-800">Smart Fertilizer Plan 🧪</h3>
+                <h3 class="text-2xl font-bold text-slate-800" id="t_fert_title">Fertilizer Calculator 🧪</h3>
                 <button onclick="closeModal('fertilizerModal')"
                     class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
             </div>
@@ -2771,7 +2773,13 @@
             'crop_2_name': 'Cotton',
             'crop_2_desc': '88% Match • Kharif Season',
             'crop_3_name': 'Tur Dal',
-            'crop_3_desc': '85% Match • Long Term'
+            'crop_3_desc': '85% Match • Long Term',
+            // MODALS
+            'disease_title': 'Disease Detection',
+            'take_photo': 'Take Photo',
+            'from_gallery': 'From Gallery',
+            'market_news_title': 'Market News',
+            'fert_title': 'Fertilizer Calculator'
         },
         'hi': {
             'welcome': 'नमस्ते',
@@ -2798,7 +2806,13 @@
             'crop_2_name': 'कपास',
             'crop_2_desc': '८८% मेल • खरीफ मौसम',
             'crop_3_name': 'तूर दाल',
-            'crop_3_desc': '८५% मेल • लंबी अवधि'
+            'crop_3_desc': '८५% मेल • लंबी अवधि',
+            // MODALS
+            'disease_title': 'रोग पहचान',
+            'take_photo': 'फोटो लें',
+            'from_gallery': 'गैलरी से चुनें',
+            'market_news_title': 'बाजार समाचार',
+            'fert_title': 'उर्वरक गणक'
         },
         'ta': {
             'welcome': 'வணக்கம்',
@@ -2825,7 +2839,13 @@
             'crop_2_name': 'பருத்தி',
             'crop_2_desc': '88% பொருத்தம் • காரீஃப்',
             'crop_3_name': 'துவரை',
-            'crop_3_desc': '85% பொருத்தம் • நீண்ட காலம்'
+            'crop_3_desc': '85% பொருத்தம் • நீண்ட காலம்',
+            // MODALS
+            'disease_title': 'நோய் அறிதல்',
+            'take_photo': 'புகைப்படம் எடு',
+            'from_gallery': 'கேலரியில் இருந்து',
+            'market_news_title': 'சந்தை செய்திகள்',
+            'fert_title': 'உரம் கால்குலேட்டர்'
         },
         'te': {
             'welcome': 'నమస్కారం',
@@ -2852,7 +2872,13 @@
             'crop_2_name': 'పత్తి',
             'crop_2_desc': '88% సరిపోలిక • ఖరీఫ్',
             'crop_3_name': 'కంది',
-            'crop_3_desc': '85% సరిపోలిక • దీర్ఘకాలికం'
+            'crop_3_desc': '85% సరిపోలిక • దీర్ఘకాలికం',
+            // MODALS
+            'disease_title': 'తెగులు గుర్తింపు',
+            'take_photo': 'ఫోటో తీయండి',
+            'from_gallery': 'గ్యాలరీ నుండి',
+            'market_news_title': 'మార్కెట్ వార్తలు',
+            'fert_title': 'ఎరువుల గణన'
         }
         // Add more langs as needed... dynamic fallback to English for missing keys
     };
@@ -2923,6 +2949,13 @@
         updateText('t_crop_3_desc', 'crop_3_desc');
 
         updateText('t_market_planner', 'market_planner');
+
+        // Modal Updates
+        updateText('t_disease_title', 'disease_title');
+        updateText('t_take_photo', 'take_photo');
+        updateText('t_from_gallery', 'from_gallery');
+        updateText('t_market_news_title', 'market_news_title');
+        updateText('t_fert_title', 'fert_title');
 
         // Nav & Profile
         updateText('profileLanguage', 'profile'); // This might be wrong key, checking... profileLanguage is usually lang Name

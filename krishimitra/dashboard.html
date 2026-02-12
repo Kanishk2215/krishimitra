@@ -1989,9 +1989,9 @@
         <div class="flex items-start gap-2">
             <div class="w-8 h-8 bg-blue-100 rounded-full flex-shrink-0 flex items-center justify-center text-sm">🤖
             </div>
-            <div
+            <div id="chatGreeting"
                 class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-slate-600 border border-slate-100">
-                Namaste! I am your AI Assistant. You can speak to me in Hindi or English.
+                Namaste! I am your AI Assistant. You can speak to me in your language.
                 <div class="mt-2 flex gap-2">
                     <button onclick="sendQuickQuery('Weather today')"
                         class="text-xs bg-slate-100 px-2 py-1 rounded-lg hover:bg-slate-200">☀️ Weather</button>
@@ -2125,13 +2125,22 @@
         }, 1500);
     }
 
-    // --- 🎙️ VOICE COPILOT (MULTILINGUAL) ---
-    let mediaRecorder;
-    let audioChunks = [];
-    let isRecording = false;
+    // --- 🎙️ VOICE COPILOT (ROBUST BROWSER STT) ---
+    // Uses Web Speech API for better accuracy with Indian Languages
+    let recognition;
+    let isListening = false;
 
-    async function toggleVoiceCopilot() {
-        // Get current language
+    function toggleVoiceCopilot() {
+        // 1. Check Browser Support
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            alert("Voice features are not supported in this browser. Please use Chrome or Edge.");
+            return;
+        }
+
+        // 2. Setup Recognition Object
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        // Get current language & Dictionary
         const langCode = localStorage.getItem('krishimitra_lang') || 'en';
         const dict = translations[langCode] || translations['en'];
 
@@ -2139,80 +2148,81 @@
         const btn = document.querySelector('button[onclick="startListening()"]');
         const visualizer = document.getElementById('voiceVisualizer');
 
-        if (!isRecording) {
+        if (!isListening) {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
+                if (!recognition) {
+                    recognition = new SpeechRecognition();
+                }
 
-                mediaRecorder.ondataavailable = (event) => {
-                    audioChunks.push(event.data);
+                // Map Lang Code to BCP-47 for Recognition
+                const langMap = {
+                    'en': 'en-IN',
+                    'hi': 'hi-IN',
+                    'ta': 'ta-IN',
+                    'te': 'te-IN',
+                    'mr': 'mr-IN',
+                    'kn': 'kn-IN',
+                    'ml': 'ml-IN',
+                    'gu': 'gu-IN',
+                    'bn': 'bn-IN',
+                    'pa': 'pa-IN'
+                };
+                recognition.lang = langMap[langCode] || 'en-IN';
+                recognition.continuous = false;
+                recognition.interimResults = false;
+
+                // Events
+                recognition.onstart = () => {
+                    isListening = true;
+                    if (visualizer) visualizer.classList.remove('hidden');
+                    if (btn) btn.classList.add('animate-pulse', 'bg-red-500');
+
+                    const listeningMsg = dict['voice_listening'] || "Listening...";
+                    addMessage("🎙️ " + listeningMsg, 'bot'); // Show as bot status/activity
                 };
 
-                mediaRecorder.onstop = async () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    sendVoiceToAI(audioBlob, langCode);
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+
+                    // Put text in input and send
+                    const input = document.getElementById('chatInput');
+                    input.value = transcript;
+                    sendMessage(); // Trigger standard chat flow
                 };
 
-                mediaRecorder.start();
-                isRecording = true;
-                if (visualizer) visualizer.classList.remove('hidden');
-                if (btn) btn.classList.add('animate-pulse', 'bg-red-500');
+                recognition.onerror = (event) => {
+                    console.error("Speech Recognition Error:", event.error);
+                    const errorMsg = dict['voice_error'] || "Voice Error";
+                    // Only show error if meaningful, ignore 'no-speech' if just silence
+                    if (event.error !== 'no-speech') {
+                        addMessage("⚠️ " + errorMsg, 'bot');
+                    }
+                    stopListeningUI();
+                };
 
-                // Show listening state
-                const listeningMsg = dict['voice_listening'] || "Listening...";
-                addMessage("🎙️ " + listeningMsg, 'user');
-                // TODO: Add 'listening' validation key to dict if needed
+                recognition.onend = () => {
+                    stopListeningUI();
+                };
+
+                recognition.start();
 
             } catch (err) {
-                console.error("Mic Access Denied:", err);
+                console.error("Mic Access Error:", err);
                 alert("Please enable microphone access.");
             }
         } else {
-            mediaRecorder.stop();
-            isRecording = false;
+            if (recognition) recognition.stop();
+            stopListeningUI();
+        }
+
+        function stopListeningUI() {
+            isListening = false;
             if (visualizer) visualizer.classList.add('hidden');
             if (btn) btn.classList.remove('animate-pulse', 'bg-red-500');
         }
     }
 
-    async function sendVoiceToAI(blob, langCode) {
-        // Get current language dict again (async safety)
-        const dict = translations[langCode] || translations['en'];
-        const processingMsg = dict['voice_processing'] || "Processing...";
-        const errorMsg = dict['voice_error'] || "Voice Service Unavailable.";
-
-        addMessage("⏳ " + processingMsg, 'user');
-
-        const formData = new FormData();
-        formData.append('audio', blob, 'voice.webm');
-        formData.append('language', langCode); // Send Language Code to Backend
-
-        try {
-            let baseUrl = typeof ML_URL !== 'undefined' ? ML_URL : 'http://127.0.0.1:5001';
-            const response = await fetch(`${baseUrl}/voice/chat`, {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-            if (result.success) {
-                addMessage(result.ai_text, 'bot');
-                // Play high-quality ElevenLabs/Backend voice if available
-                if (result.audio_b64) {
-                    playAIVoice(result.audio_b64);
-                } else {
-                    // Fallback to Browser TTS if no audio returned
-                    speak(result.ai_text);
-                }
-            } else {
-                addMessage("⚠️ Error: " + (result.error || "Unknown error"), 'bot');
-            }
-        } catch (err) {
-            console.error("Voice Chat Error:", err);
-            addMessage("⚠️ " + errorMsg, 'bot');
-        }
-    }
+    // Deprecated: sendVoiceToAI (Removed in favor of Browser STT -> Text Chat)
 
     function playAIVoice(base64Audio) {
         const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
@@ -2836,9 +2846,9 @@
             'tip_rain': 'Pause irrigation.',
             'tip_storm': 'Stay indoors! Safety first.',
             // VOICE ASSISTANT
-            'voice_listening': 'Listening...',
             'voice_processing': 'Processing...',
-            'voice_error': 'Voice Service Unavailable.'
+            'voice_error': 'Voice Service Unavailable.',
+            'bot_greeting': 'Namaste! I am your AI Assistant. You can speak to me in your language.'
         },
         'hi': {
             'welcome': 'नमस्ते',
@@ -2891,7 +2901,8 @@
             // VOICE ASSISTANT
             'voice_listening': 'सुन रहा हूँ...',
             'voice_processing': 'प्रक्रिया जारी है...',
-            'voice_error': 'वॉइस सेवा अनुपलब्ध है।'
+            'voice_error': 'वॉइस सेवा अनुपलब्ध है।',
+            'bot_greeting': 'नमस्ते! मैं आपका AI सहायक हूँ। आप मुझसे अपनी भाषा में बात कर सकते हैं।'
         },
         'ta': {
             'welcome': 'வணக்கம்',
@@ -2944,7 +2955,8 @@
             // VOICE ASSISTANT
             'voice_listening': 'கேட்கிறேன்...',
             'voice_processing': 'செயலாக்குகிறது...',
-            'voice_error': 'குரல் சேவை கிடைக்கவில்லை.'
+            'voice_error': 'குரல் சேவை கிடைக்கவில்லை.',
+            'bot_greeting': 'வணக்கம்! நான் உங்கள் AI உதவியாளர். நீங்கள் என்னிடம் உங்கள் மொழியில் பேசலாம்.'
         },
         'te': {
             'welcome': 'నమస్కారం',
@@ -2997,7 +3009,8 @@
             // VOICE ASSISTANT
             'voice_listening': 'వింటున్నాను...',
             'voice_processing': 'ప్రాసెస్ చేస్తోంది...',
-            'voice_error': 'వాయిస్ సేవ అందుబాటులో లేదు.'
+            'voice_error': 'వాయిస్ సేవ అందుబాటులో లేదు.',
+            'bot_greeting': 'నమస్కారం! నేను మీ AI సహాయకుడిని. మీరు నాతో మీ భాషలో మాట్లాడవచ్చు.'
         },
         'mr': {
             'welcome': 'नमस्कार',
@@ -3046,7 +3059,8 @@
             'tip_storm': 'सुरक्षित रहा!',
             'voice_listening': 'ऐकत आहे...',
             'voice_processing': 'प्रक्रिया सुरू आहे...',
-            'voice_error': 'सेवा अनुपलब्ध.'
+            'voice_error': 'सेवा अनुपलब्ध.',
+            'bot_greeting': 'नमस्कार! मी तुमचा AI सहाय्यक आहे. तुम्ही माझ्याशी तुमच्या भाषेत बोलू शकता.'
         },
         'kn': {
             'welcome': 'ನಮಸ್ಕಾರ',
@@ -3095,7 +3109,8 @@
             'tip_storm': 'ಸುರಕ್ಷಿತವಾಗಿರಿ!',
             'voice_listening': 'ಕೇಳುತ್ತಿದ್ದೇನೆ...',
             'voice_processing': 'ಪ್ರಕ್ರಿಯೆಗೊಳಿಸಲಾಗುತ್ತಿದೆ...',
-            'voice_error': 'ಸೇವೆ ಲಭ್ಯವಿಲ್ಲ.'
+            'voice_error': 'ಸೇವೆ ಲಭ್ಯವಿಲ್ಲ.',
+            'bot_greeting': 'ನಮಸ್ಕಾರ! ನಾನು ನಿಮ್ಮ AI ಸಹಾಯಕ. ನೀವು ನನ್ನೊಂದಿಗೆ ನಿಮ್ಮ ಭಾಷೆಯಲ್ಲಿ ಮಾತನಾಡಬಹುದು.'
         },
         'ml': {
             'welcome': 'നമസ്കാരം',
@@ -3144,7 +3159,8 @@
             'tip_storm': 'സുരക്ഷിതമായി ഇരിക്കൂ!',
             'voice_listening': 'കേൾക്കുന്നു...',
             'voice_processing': 'പ്രോസസ്സ് ചെയ്യുന്നു...',
-            'voice_error': 'സേവനം ലഭ്യമല്ല.'
+            'voice_error': 'സേവനം ലഭ്യമല്ല.',
+            'bot_greeting': 'നമസ്കാരം! ഞാൻ നിങ്ങളുടെ AI അസിസ്റ്റൻ്റാണ്. നിങ്ങൾക്ക് എന്നോട് നിങ്ങളുടെ ഭാഷയിൽ സംസാരിക്കാം.'
         },
         'gu': {
             'welcome': 'નમસ્તે',
@@ -3193,7 +3209,8 @@
             'tip_storm': 'સુરક્ષિત રહો!',
             'voice_listening': 'સાંભળી રહ્યો છું...',
             'voice_processing': 'પ્રક્રિયા ચાલુ છે...',
-            'voice_error': 'સેવા અનુપલબ્ધ.'
+            'voice_error': 'સેવા અનુપલબ્ધ.',
+            'bot_greeting': 'નમસ્તે! હું તમારો AI મદદગાર છું. તમે મારી સાથે તમારી ભાષામાં વાત કરી શકો છો.'
         },
         'bn': {
             'welcome': 'নমস্কার',
@@ -3242,7 +3259,8 @@
             'tip_storm': 'নিরাপদে থাকুন!',
             'voice_listening': 'শুনছি...',
             'voice_processing': 'প্রক্রিয়াচলাধীন...',
-            'voice_error': 'পরিষেবা উপলব্ধ নয়।'
+            'voice_error': 'পরিষেবা উপলব্ধ নয়.',
+            'bot_greeting': 'নমস্কার! আমি আপনার AI সহকারী। আপনি আমার সাথে আপনার ভাষায় কথা বলতে পারেন।'
         },
         'pa': {
             'welcome': 'ਸਤਿ ਸ਼੍ਰੀ ਅਕਾਲ',
@@ -3291,7 +3309,8 @@
             'tip_storm': 'ਸੁਰੱਖਿਅਤ ਰਹੋ!',
             'voice_listening': 'ਸੁਣ ਰਿਹਾ ਹਾਂ...',
             'voice_processing': 'ਕਾਰਵਾਈ ਜਾਰੀ ਹੈ...',
-            'voice_error': 'ਸੇਵਾ ਉਪਲਬਧ ਨਹੀਂ।'
+            'voice_error': 'ਸੇਵਾ ਉਪਲਬਧ ਨਹੀਂ।',
+            'bot_greeting': 'ਸਤਿ ਸ਼੍ਰੀ ਅਕਾਲ! ਮੈਂ ਤੁਹਾਡਾ AI ਸਹਾਇਕ ਹਾਂ। ਤੁਸੀਂ ਮੇਰੇ ਨਾਲ ਆਪਣੀ ਭਾਸ਼ਾ ਵਿੱਚ ਗੱਲ ਕਰ ਸਕਦੇ ਹੋ।'
         }
         // Add more langs as needed... dynamic fallback to English for missing keys
     };
@@ -3369,6 +3388,9 @@
         updateText('t_from_gallery', 'from_gallery');
         updateText('t_market_news_title', 'market_news_title');
         updateText('t_fert_title', 'fert_title');
+
+        // Chat Greeting
+        updateText('chatGreeting', 'bot_greeting');
 
         // Nav & Profile
         updateText('profileLanguage', 'profile'); // This might be wrong key, checking... profileLanguage is usually lang Name

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KrishiMitra Voice Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .chat-bubble {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            margin: 5px 0;
+        }
+
+        .user-bubble {
+            background: #E0F2F1;
+            color: #00695C;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+
+        .bot-bubble {
+            background: #F1F8E9;
+            color: #33691E;
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+        }
+
+        .recording {
+            animation: pulse-red 1.5s infinite;
+            background-color: #EF4444 !important;
+        }
+
+        @keyframes pulse-red {
+            0% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen flex flex-col items-center p-4">
+
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col h-[80vh]">
+        <!-- Header -->
+        <div class="bg-green-600 p-4 text-white flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">🤖</span>
+                <div>
+                    <h1 class="font-bold text-lg">KrishiMitra Assistant</h1>
+                    <div class="flex items-center gap-1 text-xs opacity-90">
+                        <span class="w-2 h-2 rounded-full bg-green-300 animate-pulse" id="status-dot"></span>
+                        <span id="status-text">Connecting...</span>
+                    </div>
+                </div>
+            </div>
+            <button onclick="checkHealth()"
+                class="text-xs bg-green-700 px-2 py-1 rounded hover:bg-green-800">Reconnect</button>
+        </div>
+
+        <!-- Chat Area -->
+        <div id="chat-box" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-gray-50">
+            <div class="bot-bubble chat-bubble shadow-sm border border-green-100">
+                Namaste! I am your AI Assistant. You can speak to me in your language. 🌾
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-4 bg-white border-t flex items-center gap-2">
+            <button id="mic-btn"
+                class="p-3 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition-all active:scale-95">
+                🎤
+            </button>
+            <input type="text" id="text-input" placeholder="Ask anything..."
+                class="flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-50">
+            <button id="send-btn"
+                class="p-3 rounded-full bg-green-600 text-white shadow-lg hover:bg-green-700 transition-all active:scale-95">
+                ➤
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:5001"; // Hardcoded to backend port
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+
+        // 1. Health Check
+        async function checkHealth() {
+            const statusText = document.getElementById('status-text');
+            const statusDot = document.getElementById('status-dot');
+            try {
+                const res = await fetch(`${API_URL}/health`);
+                if (res.ok) {
+                    statusText.textContent = "Online";
+                    statusDot.className = "w-2 h-2 rounded-full bg-green-400";
+                } else throw new Error();
+            } catch (e) {
+                statusText.textContent = "Offline (Check Backend)";
+                statusDot.className = "w-2 h-2 rounded-full bg-red-500";
+            }
+        }
+        setInterval(checkHealth, 5000);
+        checkHealth();
+
+        // 2. Chat UI Functions
+        function addMessage(text, sender, isAudio = false) {
+            const box = document.getElementById('chat-box');
+            const div = document.createElement('div');
+            div.className = `chat-bubble shadow-sm ${sender === 'user' ? 'user-bubble' : 'bot-bubble'}`;
+            div.textContent = text;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        // 3. Send Text Message
+        async function sendText() {
+            const input = document.getElementById('text-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            addMessage(text, 'user');
+            input.value = '';
+
+            try {
+                const res = await fetch(`${API_URL}/chat/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text, language: 'auto' })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    addMessage(data.data.response, 'bot');
+                } else {
+                    addMessage(`⚠️ Error: ${data.error}`, 'bot');
+                }
+            } catch (e) {
+                addMessage("❌ Connection Error. Is backend running?", 'bot');
+            }
+        }
+
+        // 4. Voice Logic
+        const micBtn = document.getElementById('mic-btn');
+
+        micBtn.onclick = async () => {
+            if (!isRecording) {
+                // Start Recording
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+
+                    mediaRecorder.onstop = async () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        await sendAudio(audioBlob);
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    micBtn.classList.add('recording');
+                } catch (e) {
+                    alert("Microphone access denied or error: " + e.message);
+                }
+            } else {
+                // Stop Recording
+                mediaRecorder.stop();
+                isRecording = false;
+                micBtn.classList.remove('recording');
+            }
+        };
+
+        async function sendAudio(blob) {
+            addMessage("🎤 (Sending Audio...)", 'user');
+
+            const formData = new FormData();
+            formData.append('audio', blob, 'recording.webm');
+            formData.append('language', 'auto');
+
+            try {
+                const res = await fetch(`${API_URL}/voice/chat`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    addMessage(`📝 You said: "${data.user_text}"`, 'user');
+                    addMessage(data.ai_text, 'bot');
+
+                    // Play Audio Response
+                    if (data.audio_b64) {
+                        const audio = new Audio(`data:audio/mp3;base64,${data.audio_b64}`);
+                        audio.play();
+                    }
+                } else {
+                    addMessage(`⚠️ Error: ${data.error}`, 'bot');
+                }
+            } catch (e) {
+                addMessage("❌ Voice Server Error", 'bot');
+            }
+        }
+
+        // Enter key to send
+        document.getElementById('text-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendText();
+        });
+        document.getElementById('send-btn').onclick = sendText;
+
+    </script>
+</body>
+
+</html>

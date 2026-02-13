@@ -1,0 +1,28 @@
+
+============================================================
+🚨 CRITICAL: YOUR GOOGLE AI API IS NOT ENABLED
+============================================================
+
+Your bot works in "Offline Mode" because Google is blocking your API Key.
+Error Code: 404 (API Not Enabled)
+
+To fix this and get "Online Mode" (answers for EVERYTHING), follow these steps:
+
+1️⃣ CLICK THIS LINK:
+   https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com
+
+2️⃣ SELECT YOUR PROJECT:
+   - In the top-left dropdown, select the project where you created the API key "AIza...".
+
+3️⃣ CLICK THE BLUE "ENABLE" BUTTON:
+   - Wait for it to say "API Enabled".
+
+------------------------------------------------------------
+ONCE ENABLED:
+------------------------------------------------------------
+1. Go back to your Debug Chat.
+2. Type "How to grow sugarcane?"
+3. It will work INSTANTLY!
+
+(You do NOT need to restart the bot. Just enable the API.)
+============================================================

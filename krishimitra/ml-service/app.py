@@ -6,10 +6,20 @@ import random
 import numpy as np
 from PIL import Image
 import io
+import base64
 
 app = Flask(__name__)
+
 # Enable CORS for all routes and origins
-CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+CORS(app, resources={
+    r"/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "expose_headers": ["Content-Type"],
+        "supports_credentials": True
+    }
+})
 
 # Add explicit OPTIONS handling for preflight requests
 @app.before_request
@@ -141,6 +151,7 @@ def recommend():
         results.sort(key=lambda x: int(x['confidence'].replace('%', '')), reverse=True)
         return jsonify({"success": True, "recommendations": results[:5]})
     except Exception as e:
+        print(f"Recommend Error: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/analyze-disease', methods=['POST', 'OPTIONS'])
@@ -299,98 +310,181 @@ def analyze_disease():
         }
         return jsonify(data)
     except Exception as e:
-        print(f"API Error: {e}")
+        print(f"Disease Analysis Error: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/health', methods=['GET'])
 def health():
-    return jsonify({"status": "OK"})
+    return jsonify({"status": "OK", "service": "KrishiMitra Backend"})
 
 
-from chatbot import ChatAssistant
-from voice_copilot import VoiceCopilot
+# Import the improved voice copilot
+try:
+    from voice_copilot_fixed import VoiceCopilot
+    voice_copilot = VoiceCopilot()
+    print("✅ VoiceCopilot loaded successfully")
+except ImportError:
+    print("⚠️ Using original voice_copilot.py")
+    try:
+        from voice_copilot import VoiceCopilot
+        voice_copilot = VoiceCopilot()
+    except Exception as e:
+        print(f"❌ Error loading voice_copilot: {e}")
+        voice_copilot = None
 
-chat_assistant = ChatAssistant()
-voice_copilot = VoiceCopilot()
-
-@app.route('/chat/send', methods=['POST'])
+@app.route('/chat/send', methods=['POST', 'OPTIONS'])
+@cross_origin()
 def chat_send():
     try:
+        if request.method == 'OPTIONS':
+            return jsonify({'status': 'ok'}), 200
+            
         data = request.json or {}
         text = data.get('text', '')
         user_id = data.get('user_id', 'guest')
-        language = data.get('language', 'en') # Get language context
+        language = data.get('language', 'auto')  # Support auto-detection
+        
+        if not text or text.strip() == '':
+            return jsonify({
+                "success": False, 
+                "error": "Empty message"
+            }), 400
+        
+        if not voice_copilot:
+            return jsonify({
+                "success": False,
+                "error": "Voice Copilot not initialized"
+            }), 500
         
         # Use VoiceCopilot's AI Logic (LLM) for smarter multilingual response
-        # It handles translation via System Prompt
         ai_reply = voice_copilot.get_text_response(text, language)
         
-        # Format like ChatAssistant result for compatibility
+        # Format response
         result = {
             "response": ai_reply,
-            "action": None, # Could parse action from AI text if needed
+            "language": voice_copilot.detect_language(text) if language == 'auto' else language,
+            "action": None,
             "timestamp": "now"
         }
         
         return jsonify({"success": True, "data": result})
     except Exception as e:
         print(f"Chat Error: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
 
-from fertilizer_recommender import FertilizerRecommender
-
-fertilizer_recommender = FertilizerRecommender()
-
-@app.route('/fertilizer/recommend', methods=['POST'])
-def recommend_fertilizer():
-    try:
-        data = request.json
-        result = fertilizer_recommender.recommend(
-            crop_name=data.get('crop_name'),
-            soil_type=data.get('soil_type'),
-            land_size=data.get('land_size'),
-            growth_stage=data.get('growth_stage', 'Sowing'),
-            soil_test=data.get('soil_test'),
-            prefer_organic=data.get('prefer_organic', False),
-            budget=data.get('budget'),
-            season=data.get('season', 'Kharif')
-        )
-        return jsonify(result)
-    except Exception as e:
-        print(f"Fertilizer Recommendation Error: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route('/voice/chat', methods=['POST'])
+@app.route('/voice/chat', methods=['POST', 'OPTIONS'])
+@cross_origin()
 def voice_chat():
     try:
+        if request.method == 'OPTIONS':
+            return jsonify({'status': 'ok'}), 200
+            
         if 'audio' not in request.files:
-            return jsonify({"success": False, "error": "No audio file provided"}), 400
+            return jsonify({
+                "success": False, 
+                "error": "No audio file provided. Please record your voice."
+            }), 400
             
         file = request.files['audio']
         audio_bytes = file.read()
         
-        result = voice_copilot.process_voice_query(audio_bytes)
+        if len(audio_bytes) < 100:  # Too small to be valid audio
+            return jsonify({
+                "success": False,
+                "error": "Audio file too small. Please record again."
+            }), 400
+        
+        if not voice_copilot:
+            return jsonify({
+                "success": False,
+                "error": "Voice Copilot not initialized"
+            }), 500
+        
+        # Get language preference if provided
+        language = request.form.get('language', 'auto')
+        
+        # Process voice query
+        result = voice_copilot.process_voice_query(audio_bytes, language)
         
         if "error" in result:
-             return jsonify({"success": False, "error": result["error"]}), 500
+            return jsonify({
+                "success": False, 
+                "error": result["error"],
+                "hint": "Please speak clearly and try again. Make sure your microphone is working."
+            }), 500
 
         # Convert audio bytes to base64 to send to frontend
-        import base64
         audio_b64 = None
         if result.get("ai_audio"):
-             audio_b64 = base64.b64encode(result["ai_audio"]).decode('utf-8')
+            audio_b64 = base64.b64encode(result["ai_audio"]).decode('utf-8')
 
         return jsonify({
             "success": True,
             "user_text": result["user_text"],
             "ai_text": result["ai_text"],
-            "audio_b64": audio_b64
+            "audio_b64": audio_b64,
+            "language": result.get("language", "en")
         })
     except Exception as e:
         print(f"Voice Chat Error: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "success": False, 
+            "error": f"Voice processing failed: {str(e)}",
+            "hint": "Please check your microphone and try again."
+        }), 500
+
+# Optional: Fertilizer recommender (if you have the module)
+try:
+    from fertilizer_recommender import FertilizerRecommender
+    fertilizer_recommender = FertilizerRecommender()
+    
+    @app.route('/fertilizer/recommend', methods=['POST', 'OPTIONS'])
+    @cross_origin()
+    def recommend_fertilizer():
+        try:
+            if request.method == 'OPTIONS':
+                return jsonify({'status': 'ok'}), 200
+                
+            data = request.json
+            result = fertilizer_recommender.recommend(
+                crop_name=data.get('crop_name'),
+                soil_type=data.get('soil_type'),
+                land_size=data.get('land_size'),
+                growth_stage=data.get('growth_stage', 'Sowing'),
+                soil_test=data.get('soil_test'),
+                prefer_organic=data.get('prefer_organic', False),
+                budget=data.get('budget'),
+                season=data.get('season', 'Kharif')
+            )
+            return jsonify(result)
+        except Exception as e:
+            print(f"Fertilizer Recommendation Error: {e}")
+            return jsonify({"success": False, "error": str(e)}), 500
+except ImportError:
+    print("⚠️ FertilizerRecommender not available")
+
+# Optional: ChatAssistant (if you have the module)
+try:
+    from chatbot import ChatAssistant
+    chat_assistant = ChatAssistant()
+    print("✅ ChatAssistant loaded")
+except ImportError:
+    print("⚠️ ChatAssistant not available")
 
 if __name__ == '__main__':
-    # Get port from environment variable (Render sets this)
+    # Get port from environment variable (Render/Heroku sets this)
     port = int(os.environ.get('PORT', 5001))
+    
+    print("\n" + "="*60)
+    print("🚀 KrishiMitra Backend Starting...")
+    print("="*60)
+    print(f"📡 Server: http://0.0.0.0:{port}")
+    print(f"🔑 Gemini API: {'✅ Configured' if os.getenv('GOOGLE_API_KEY') or 'AIzaSy' in str(os.getenv('GOOGLE_API_KEY', '')) else '❌ Missing'}")
+    print(f"🎤 Voice: {'✅ Available' if voice_copilot else '❌ Not Available'}")
+    print("="*60 + "\n")
+    
     app.run(host='0.0.0.0', port=port, debug=False, threaded=True)

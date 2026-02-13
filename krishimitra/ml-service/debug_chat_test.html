@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KrishiMitra Debug Chat</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+
+        .log-box {
+            background: #f0f0f0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        #chat-results {
+            margin-top: 20px;
+        }
+
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .user {
+            background: #e3f2fd;
+            text-align: right;
+        }
+
+        .bot {
+            background: #e8f5e9;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🐞 KrishiMitra Debug Chat</h1>
+    <p>Use this page to test if your Backend is working correctly.</p>
+
+    <div>
+        <h3>1. Connectivity Test</h3>
+        <button onclick="checkHealth()">Test Backend Connection</button>
+        <span id="health-status"></span>
+    </div>
+
+    <div>
+        <h3>2. Chat Test</h3>
+        <button onclick="sendTest('en')">Test English ("Hello")</button>
+        <button onclick="sendTest('ta')">Test Tamil ("கோதுமை...")</button>
+        <button onclick="sendTest('hi')">Test Hindi ("गेहूं...")</button>
+    </div>
+
+    <div id="chat-results"></div>
+
+    <h3>📜 Debug Log</h3>
+    <div id="log-box" class="log-box"></div>
+
+    <script>
+        const API_URL = "http://localhost:5001";
+
+        function log(msg, type = 'info') {
+            const box = document.getElementById('log-box');
+            const color = type === 'error' ? 'red' : (type === 'success' ? 'green' : 'black');
+            box.innerHTML += `<span style="color:${color}">[${new Date().toLocaleTimeString()}] ${msg}</span>\n`;
+            box.scrollTop = box.scrollHeight;
+            console.log(msg);
+        }
+
+        async function checkHealth() {
+            log("Checking backend health...", "info");
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                const data = await response.json();
+                if (data.status === "OK") {
+                    document.getElementById('health-status').innerHTML = "✅ Create Connection Successful!";
+                    document.getElementById('health-status').className = "success";
+                    log("Backend is RUNNING! Status: OK", "success");
+                } else {
+                    throw new Error("Invalid response");
+                }
+            } catch (error) {
+                document.getElementById('health-status').innerHTML = "❌ Connection Failed! Retrying in 5s...";
+                document.getElementById('health-status').className = "error";
+                log(`Backend check failed: ${error.message}. Retrying...`, "error");
+                setTimeout(checkHealth, 5000);
+            }
+        }
+
+        async function sendTest(lang) {
+            const queries = {
+                'en': "Hello, are you working?",
+                'ta': "கோதுமை எப்படி வளர்ப்பது?",
+                'hi': "गेहूं कैसे उगाएं?"
+            };
+
+            const text = queries[lang];
+            log(`Sending ${lang.toUpperCase()} request: "${text}"...`, "info");
+
+            // Show user message
+            displayMessage('user', text);
+
+            try {
+                const response = await fetch(`${API_URL}/chat/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: text,
+                        language: 'auto',
+                        user_id: 'debug_test'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP Error ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    log(`Received response in ${data.data.language}`, "success");
+                    displayMessage('bot', data.data.response);
+                } else {
+                    log(`Backend error: ${data.error}`, "error");
+                    displayMessage('bot', `❌ Error: ${data.error}`);
+                }
+
+            } catch (error) {
+                log(`Fetch failed: ${error.message}`, "error");
+                displayMessage('bot', "❌ Failed to connect to backend. Is it running?");
+            }
+        }
+
+        function displayMessage(sender, text) {
+            const container = document.getElementById('chat-results');
+            const div = document.createElement('div');
+            div.className = `message ${sender}`;
+            div.innerHTML = `<strong>${sender === 'user' ? 'You' : 'Bot'}:</strong> ${text}`;
+            container.appendChild(div);
+        }
+
+        // Auto-check on load
+        window.onload = checkHealth;
+    </script>
+</body>
+
+</html>

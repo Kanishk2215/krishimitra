@@ -28,12 +28,14 @@ CD ..
 ECHO [2/3] Starting ML Service...
 CD ml-service
 IF NOT EXIST "venv" (
+    ECHO Creating Virtual Environment...
     python -m venv venv
-    call venv\Scripts\activate
-    pip install -r requirements.txt
-) ELSE (
-    call venv\Scripts\activate
 )
+
+call venv\Scripts\activate
+ECHO Installing Dependencies...
+pip install -r requirements.txt
+
 START "Krishimitra ML Service" cmd /k "venv\Scripts\activate && python app.py"
 CD ..
 
